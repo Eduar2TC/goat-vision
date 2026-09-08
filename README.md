@@ -15,6 +15,11 @@ CÁMARA → DETECCIÓN → SEGMENTACIÓN → LANDMARKS → CALIBRACIÓN
 → RANGO DE INCERTIDUMBRE → CONFIANZA → HISTORIAL
 ```
 
+Uso sin herramientas: el dashboard ofrece **"Escanear cabra"** (captura
+directa sin crear antes un animal). Al guardar, si no se eligió cabra, se
+registra una ligera "Cabra sin registrar · fecha" que puede renombrarse
+desde su detalle. Ninguna medida ni peso se introduce a mano.
+
 ## Estructura del repositorio
 
 ```

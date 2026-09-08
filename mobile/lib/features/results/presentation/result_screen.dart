@@ -7,6 +7,7 @@ import 'package:goatvision/data/repositories/drift_measurement_repository.dart';
 import 'package:goatvision/data/repositories/drift_capture_repository.dart';
 import 'package:goatvision/data/repositories/repository_providers.dart';
 import 'package:goatvision/core/utils/app_logger.dart';
+import 'package:goatvision/domain/entities/animal.dart';
 import 'package:uuid/uuid.dart';
 
 class ResultScreen extends ConsumerStatefulWidget {
@@ -22,8 +23,13 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
   Future<void> _save() async {
     final session = ref.read(analysisSessionProvider);
     if (session == null || _saving) return;
-    if (session.animalId.isEmpty) {
-      _showMessage('Selecciona una cabra para guardar la medición.');
+
+    final String animalId;
+    try {
+      animalId = await _resolveAnimalId(session);
+    } catch (e) {
+      AppLogger.instance.error('Failed to resolve animal for save', error: e);
+      _showMessage('No se pudo registrar la cabra. Intenta de nuevo.');
       return;
     }
 
@@ -35,7 +41,7 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
       await ref.read(measurementRepositoryProvider).saveMeasurement(
             MeasurementRecord(
               id: recordId,
-              animalId: session.animalId,
+              animalId: animalId,
               timestamp: timestamp,
               estimatedWeightKg: session.estimatedWeightKg,
               lowerWeightKg: session.lowerWeightKg,
@@ -73,16 +79,42 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
       }
 
       AppLogger.instance.info(
-        'Saved measurement $recordId for animal ${session.animalId}',
+        'Saved measurement $recordId for animal $animalId',
       );
       if (!mounted) return;
-      context.go('/animals/${session.animalId}');
+      context.go('/animals/$animalId');
     } catch (e) {
       AppLogger.instance.error('Failed to save measurement', error: e);
       _showMessage('No se pudo guardar la medición. Intenta de nuevo.');
     } finally {
       if (mounted) setState(() => _saving = false);
     }
+  }
+
+  /// Returns the animal to attach the measurement to. If the capture was a
+  /// "rapid scan" (no animal selected), a lightweight animal is registered
+  /// so the measurement always has a valid owner.
+  Future<String> _resolveAnimalId(AnalysisSessionState session) async {
+    if (session.animalId.isNotEmpty) return session.animalId;
+
+    final now = DateTime.now();
+    const months = [
+      'ene', 'feb', 'mar', 'abr', 'may', 'jun',
+      'jul', 'ago', 'sep', 'oct', 'nov', 'dic',
+    ];
+    final anon = Animal(
+      id: const Uuid().v4(),
+      name: 'Cabra sin registrar · ${now.day} ${months[now.month - 1]}',
+      createdAt: now,
+      updatedAt: now,
+    );
+
+    await ref.read(animalRepositoryProvider).saveAnimal(anon);
+    _showMessage(
+      'Medición guardada. Registrada como "${anon.name}" — '
+      'edita su nombre cuando quieras.',
+    );
+    return anon.id;
   }
 
   Map<String, double> _cmMap(AnalysisSessionState session) {
@@ -104,6 +136,13 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
     );
+  }
+
+  String _modelLabel(String version) {
+    if (version.startsWith('ref-')) {
+      return 'Fórmula de referencia (literatura)';
+    }
+    return version;
   }
 
   @override
@@ -267,7 +306,7 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Modelo: ${session.modelVersion}',
+              'Modelo: ${_modelLabel(session.modelVersion)}',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall,
             ),

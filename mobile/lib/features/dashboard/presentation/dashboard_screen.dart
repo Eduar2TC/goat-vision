@@ -95,7 +95,8 @@ class DashboardScreen extends ConsumerWidget {
                     child: Padding(
                       padding: EdgeInsets.all(16),
                       child: Text(
-                        'Aún no hay mediciones. Registra una cabra y mide su peso.',
+                        'Aún no hay mediciones. Toca "Escanear cabra" para '
+                        'estimar el peso solo con la cámara.',
                       ),
                     ),
                   )
@@ -104,9 +105,15 @@ class DashboardScreen extends ConsumerWidget {
                     _MeasurementTile(measurement: m),
                 const SizedBox(height: 24),
                 FilledButton.icon(
+                  onPressed: () => context.push('/capture'),
+                  icon: const Icon(Icons.camera_alt),
+                  label: const Text('Escanear cabra'),
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
                   onPressed: () => context.push('/animals'),
-                  icon: const Icon(Icons.add),
-                  label: const Text('+ Nueva medición'),
+                  icon: const Icon(Icons.pets),
+                  label: const Text('Administrar cabras'),
                 ),
               ],
             );

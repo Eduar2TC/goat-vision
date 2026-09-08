@@ -131,8 +131,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ),
             const SizedBox(height: 4),
             Text(
-              'En modo mock no hay modelos reales que gestionar. '
-              'La integración TFLite está pendiente (ver docs/ml/pipeline.md).',
+              'La detección/segmentación/landmarks son mocks de desarrollo. '
+              'El peso usa una fórmula de referencia publicada hasta que '
+              'integres un modelo TFLite propio.',
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 12),
@@ -152,9 +153,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               status: 'Mock',
             ),
             const _ModelTile(
-              name: 'goat_weight.tflite',
-              version: 'mock-v1.0',
-              status: 'Mock',
+              name: 'weight_reference',
+              version: 'ref-paredes-chocce-2025',
+              subtitle:
+                  'R²=0.644 · RSE=6.305 kg · n=356 '
+                  '(Biodiversitas 26(7), DOI 10.13057/biodiv/d260710)',
+              status: 'Fórmula (literatura)',
             ),
           ],
         ),
@@ -188,9 +192,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 '· Altura de grupa\n'
                 '· Profundidad de pecho\n'
                 '· Anchos de pecho y grupa\n\n'
-                'Estas medidas se convierten a centímetros usando un marcador '
-                'de calibración y se introducen en un modelo de regresión '
-                'entrenado con datos reales.\n\n'
+                'Las medidas se convierten a centímetros usando un marcador '
+                'de calibración. El peso se calcula con una ecuación de '
+                'regresión publicada (Paredes-Chocce et al. 2025, cabras '
+                'criollas peruanas). Con tus propios datos puedes entrenar un '
+                'modelo personalizado que sustituya esta referencia.\n\n'
                 'El resultado incluye un rango de incertidumbre. '
                 'Este NO es un valor de báscula exacto.',
               ),
@@ -206,11 +212,13 @@ class _ModelTile extends StatelessWidget {
   final String name;
   final String version;
   final String status;
+  final String? subtitle;
 
   const _ModelTile({
     required this.name,
     required this.version,
     required this.status,
+    this.subtitle,
   });
 
   @override
@@ -218,7 +226,7 @@ class _ModelTile extends StatelessWidget {
     return ListTile(
       contentPadding: EdgeInsets.zero,
       title: Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
-      subtitle: Text('Versión: $version'),
+      subtitle: Text(subtitle ?? 'Versión: $version'),
       trailing: Chip(
         label: Text(
           status,

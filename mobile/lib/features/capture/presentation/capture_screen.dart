@@ -249,10 +249,7 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
         timestamp: DateTime.now(),
       );
 
-      String? imagePath;
-      if (widget.animalId != null && widget.animalId!.isNotEmpty) {
-        imagePath = await _persistCaptureImage(bytes: bytes);
-      }
+      final imagePath = await _persistCaptureImage(bytes: bytes);
 
       final state = AnalysisSessionState(
         animalId: widget.animalId ?? '',
@@ -290,7 +287,7 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
       final imageStorage = await ImageStorageService.create();
       final path = await imageStorage.saveCapture(
         bytes: bytes,
-        animalId: widget.animalId!,
+        animalId: widget.animalId ?? 'rapid',
       );
       AppLogger.instance.debug('Capture image stored at $path');
       return path;
