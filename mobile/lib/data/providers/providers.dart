@@ -5,6 +5,9 @@ import 'package:goatvision/core/ml/mock_ml_services.dart';
 import 'package:goatvision/core/ml/reference_weight_predictor.dart';
 import 'package:goatvision/core/ml/weight_prediction_service.dart';
 
+export 'package:goatvision/core/ml/analysis_pipeline.dart'
+    show AnalysisPipeline, RunMode;
+
 final runModeProvider = StateProvider<RunMode>((ref) => RunMode.mock);
 
 final analysisPipelineProvider = Provider<AnalysisPipeline>((ref) {

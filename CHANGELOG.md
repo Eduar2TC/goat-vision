@@ -7,6 +7,39 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 ## 2026-09-08
 
 ### Añadido
+- **CI/CD** — `.github/workflows/ci.yml`: suite ML (21 tests) + Flutter
+  (build_runner → analyze → test → APK debug subido como artefacto) en cada
+  push a `main`. Instala Android SDK, Java 17, SQLite nativo para los tests
+  drift y desinstala la suposición "aquí no compila".
+- **Recolección de dataset (modo dev)** — campo opcional "Peso real en
+  báscula (kg)" en la pantalla de resultados; al guardar, `DatasetLogService`
+  registra una fila (features + objetivo) en `dataset_log.jsonl`.
+  Configuración → **Exportar dataset (CSV)** genera `dataset.csv` con las
+  8 columnas de `FEATURE_COLUMNS` + metadatos (`real_weight_kg` = objetivo).
+- **Tests Dart nuevos** — `history_filter_test` (filtro puro extraído),
+  `drift_animal_repository_test` (borrado en cascada con DB en memoria vía
+  `AppDatabase.forTesting`), `settings_screen_test` (informe científico y
+  modal de modelos), `dataset_log_format_test` (JSONL/CSV y escaping).
+- **Scaffold de integración TFLite documentado** — `docs/ml/integration-mobile.md`
+  define el contrato assets ↔ interfaces, cableado de providers, calibración
+  real y la regla de "no mocks en RunMode.real".
+- **Fuentes Inter** — los 4 TTFs (Regular/Medium/SemiBold/Bold, OFL) + LICENSE
+  en `assets/fonts`: eran referenciados por el tema y el pubspec pero no
+  existían, así que `flutter build` no podía completarse en ninguna máquina.
+
+### Corregido
+- **Import latente de `RunMode`** — `settings`, `capture` y `results` usaban
+  `RunMode` sin importarlo; ahora `providers.dart` lo reexporta
+  (`export ... show AnalysisPipeline, RunMode`). Sin esto, `flutter analyze`
+  habría fallado en CI.
+
+### Documentado
+- `README.md` — badge CI, recolección de datos, pipeline CI.
+- `mobile/README.md` — sección de funcionalidades (escaneo rápido, cabras,
+  historial/búsqueda, ajustes e informe científico).
+- `docs/ml/integration-mobile.md` — nuevo (ver arriba).
+
+### Añadido
 - **Predictor de peso de referencia (literatura)** — `ReferenceWeightPredictor`
   (Dart) + `ml/literature/reference_weight.py` (numpy puro): ecuación stepwise
   de Paredes-Chocce et al. (2025), `BW = -45.642 + 0.71·TG + 0.21·RH + 0.99·RW`

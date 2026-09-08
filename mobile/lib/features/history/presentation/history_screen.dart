@@ -6,6 +6,7 @@ import 'package:goatvision/core/utils/unit_converter.dart';
 import 'package:goatvision/data/repositories/repository_providers.dart';
 import 'package:goatvision/data/repositories/drift_measurement_repository.dart';
 import 'package:goatvision/domain/entities/animal.dart';
+import 'package:goatvision/features/history/domain/history_filter.dart';
 
 class HistoryScreen extends ConsumerStatefulWidget {
   const HistoryScreen({super.key});
@@ -45,16 +46,11 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
 
             final animalById = {for (final a in animals) a.id: a.name};
 
-            final query = _query.trim().toLowerCase();
-            final records = query.isEmpty
-                ? allRecords
-                : allRecords.where((r) {
-                    final name = (animalById[r.animalId] ?? '').toLowerCase();
-                    final weight = r.estimatedWeightKg
-                        .toStringAsFixed(1)
-                        .toLowerCase();
-                    return name.contains(query) || weight.contains(query);
-                  }).toList();
+            final records = filterHistoryRecords(
+              records: allRecords,
+              animalNamesById: animalById,
+              query: _query,
+            );
 
             return Column(
               children: [

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:goatvision/core/constants/app_constants.dart';
 import 'package:goatvision/core/constants/app_colors.dart';
 import 'package:goatvision/core/storage/app_storage.dart';
+import 'package:goatvision/core/storage/dataset_log_service.dart';
 import 'package:goatvision/core/theme/theme_mode_provider.dart';
 import 'package:goatvision/data/providers/providers.dart';
 
@@ -109,6 +110,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               onTap: () => _showScienceInfo(context),
             ),
             const Divider(),
+            if (mode == RunMode.mock) ...[
+              ListTile(
+                leading: const Icon(Icons.file_download_outlined),
+                title: const Text('Exportar dataset (CSV)'),
+                subtitle: const Text(
+                  'Recolección de datos para entrenar tu modelo',
+                ),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => _showDatasetExport(context),
+              ),
+              const Divider(),
+            ],
             ListTile(
               leading: const Icon(Icons.privacy_tip),
               title: const Text('Privacidad'),
@@ -191,6 +204,61 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Future<void> _showDatasetExport(BuildContext context) async {
+    final file = await DatasetLogService.exportCsv();
+    final rows = await DatasetLogService.readRows();
+    if (!context.mounted) return;
+
+    final content = await file.readAsString();
+    final preview = content.length > 600
+        ? content.substring(0, 600)
+        : content;
+
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Dataset exportado'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${rows.length} registro(s)',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 4),
+                SelectableText(
+                  file.path,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SelectableText(
+                  preview.isEmpty ? '(sin registros aún)' : preview,
+                  style: const TextStyle(
+                    fontFamily: 'monospace',
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cerrar'),
+          ),
+        ],
       ),
     );
   }

@@ -1,5 +1,7 @@
 # GoatVision
 
+[![CI](https://github.com/Eduar2TC/goat-vision/actions/workflows/ci.yml/badge.svg)](https://github.com/Eduar2TC/goat-vision/actions/workflows/ci.yml)
+
 Aplicación móvil Android para estimar el peso vivo de cabras mediante
 Computer Vision, de forma **no invasiva y completamente offline**.
 
@@ -30,6 +32,24 @@ persistido, detalle honesto del estado de los modelos (los tres CV son mocks
 de desarrollo; el peso usa la fórmula de referencia publicada) e **informe
 científico** completo (ecuación, R²/RSE, rango de aplicación, cita y DOI
 copiable, y advertencias de incertidumbre).
+
+## Recolección de datos (entrenar tu modelo)
+
+En modo desarrollador (`Configuración → Modo de desarrollo`, activado por
+defecto) la pantalla de resultados muestra un campo opcional **"Peso real en
+báscula (kg)"**. Al guardar la medición se añade una fila
+(features + objetivo) al log `dataset_log.jsonl`. **Configuración →
+Exportar dataset (CSV)** genera `dataset.csv` con las 8 columnas de features
++ metadatos, listo para el pipeline en `ml/` (el objetivo `real_weight_kg`
+coincide con `TARGET` en `ml/preprocessing/features.py`).
+
+## CI / pruebas
+
+`.github/workflows/ci.yml` ejecuta en cada push a `main`:
+suite ML de Python (21 tests con numpy/pandas/sklearn/opencv),
+`build_runner` → `flutter analyze` → `flutter test` → **APK debug** subido
+como artefacto. Regenera los archivos `*.g.dart`/`*.freezed.dart`
+(no versionados).
 
 ## Estructura del repositorio
 

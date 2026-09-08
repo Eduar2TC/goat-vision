@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:goatvision/core/constants/app_colors.dart';
+import 'package:goatvision/core/storage/dataset_log_format.dart';
+import 'package:goatvision/core/storage/dataset_log_service.dart';
 import 'package:goatvision/data/providers/providers.dart';
 import 'package:goatvision/data/repositories/drift_measurement_repository.dart';
 import 'package:goatvision/data/repositories/drift_capture_repository.dart';
@@ -20,6 +22,13 @@ class ResultScreen extends ConsumerStatefulWidget {
 
 class _ResultScreenState extends ConsumerState<ResultScreen> {
   bool _saving = false;
+  final TextEditingController _scaleController = TextEditingController();
+
+  @override
+  void dispose() {
+    _scaleController.dispose();
+    super.dispose();
+  }
 
   Future<void> _save() async {
     final session = ref.read(analysisSessionProvider);
@@ -79,6 +88,8 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
             );
       }
 
+      await _appendDatasetRowIfRequested(recordId, animalId, timestamp, session);
+
       AppLogger.instance.info(
         'Saved measurement $recordId for animal $animalId',
       );
@@ -90,6 +101,28 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
     } finally {
       if (mounted) setState(() => _saving = false);
     }
+  }
+
+  /// En modo desarrollador, si el usuario anotó el peso real en báscula,
+  /// se registra la fila de dataset (features + objetivo) para entrenamiento.
+  Future<void> _appendDatasetRowIfRequested(
+    String recordId,
+    String animalId,
+    DateTime timestamp,
+    AnalysisSessionState session,
+  ) async {
+    final scale = double.tryParse(_scaleController.text.trim());
+    if (scale == null || scale <= 0) return;
+
+    await DatasetLogService.append(
+      buildDatasetRow(
+        measurementId: recordId,
+        animalId: animalId,
+        timestamp: timestamp,
+        realWeightKg: scale,
+        features: _cmMap(session),
+      ),
+    );
   }
 
   /// Returns the animal to attach the measurement to. If the capture was a
@@ -242,6 +275,55 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
               ),
             ),
             const SizedBox(height: 24),
+            if (ref.watch(runModeProvider) == RunMode.mock) ...[
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.warning.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.data_object,
+                          size: 18,
+                          color: AppColors.warning,
+                        ),
+                        const SizedBox(width: 8),
+                        const Expanded(
+                          child: Text(
+                            'Recolección de dataset (desarrollador)',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Anota el peso real en báscula para entrenar tu modelo. '
+                      'Se guardará una fila (features + peso real) en el log.',
+                      style: TextStyle(fontSize: 12),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _scaleController,
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
+                      decoration: const InputDecoration(
+                        labelText: 'Peso real en báscula (kg)',
+                        prefixText: '≈ ',
+                        border: OutlineInputBorder(),
+                        isDense: true,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
             Text(
               'Medidas',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
