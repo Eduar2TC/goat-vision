@@ -9,6 +9,27 @@ Computer Vision, de forma **no invasiva y completamente offline**.
 > No sustituyen a una báscula. La app muestra peso estimado + rango de
 > incertidumbre + nivel de confianza.
 
+## Estado del proyecto (2026-09-08)
+
+| Componente | Estado | Notas |
+|---|---|---|
+| Peso (literatura) | Funcional | Ecuación Paredes-Chocce 2025, honesta (RSE publicado, no PICP propio) |
+| CV (detección/segmentación/landmarks) | Mock | Servicios simulados; `RunMode.real` lanza `UnimplementedError` a propósito |
+| Calibración (marcador 30 cm) | Mock | `MockMarkerDetector`; en producción requiere ArUco real |
+| UI / UX | Funcional | Escaneo rápido, historial con búsqueda, modo oscuro, ed./borrado de cabras |
+| Dataset (recolección) | Funcional (dev) | Guarda peso real + features en JSONL; exporta CSV |
+| CI/CD | Parcial | Workflow definido; Flutter pub get y 1 test ML fallan en GitHub Actions (pendiente resolver) |
+| Tests ML | 21/21 | 13 numpy puros + 8 con pandas/sklearn/opencv (validados localmente) |
+| Tests Dart | ~20 | Unit + widget; requieren `flutter test` en host real para ejecutarse |
+| APK compilado | Pendiente | Requiere host con Flutter SDK + Android SDK para `flutter build apk` |
+
+**Bloqueo actual:** El pipeline de CV real (`RunMode.real`) requiere 4 modelos
+`.tflite` que aún no se han entrenado ni exportado. Mientras tanto, la app usa
+la fórmula de referencia de literatura para el peso y mocks para la CV. El
+siguiente paso es: (1) colectar datos reales con báscula usando el modo dev,
+(2) entrenar modelos en `ml/`, (3) exportar a `.tflite`, (4) implementar las
+clases TFLite en `mobile/lib/core/ml/tflite/`.
+
 ## Flujo principal
 
 ```
