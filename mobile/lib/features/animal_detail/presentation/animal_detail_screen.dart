@@ -52,7 +52,7 @@ class AnimalDetailScreen extends ConsumerWidget {
             return ListView(
               padding: const EdgeInsets.only(bottom: 88),
               children: [
-                _Header(animal: animal),
+                _Header(animal: animal, onEdit: () => context.push('/animals/edit', extra: animal)),
                 const SizedBox(height: 8),
                 if (records.isNotEmpty) _WeightChart(records: records),
                 const SizedBox(height: 8),
@@ -87,7 +87,8 @@ class AnimalDetailScreen extends ConsumerWidget {
 
 class _Header extends StatelessWidget {
   final Animal animal;
-  const _Header({required this.animal});
+  final VoidCallback onEdit;
+  const _Header({required this.animal, required this.onEdit});
 
   @override
   Widget build(BuildContext context) {
@@ -125,6 +126,11 @@ class _Header extends StatelessWidget {
                       ),
                   ],
                 ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.edit_outlined),
+                tooltip: 'Editar cabra',
+                onPressed: onEdit,
               ),
             ],
           ),

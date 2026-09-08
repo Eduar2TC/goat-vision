@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:goatvision/core/constants/app_constants.dart';
 import 'package:goatvision/core/constants/app_colors.dart';
 import 'package:goatvision/core/storage/app_storage.dart';
+import 'package:goatvision/core/theme/theme_mode_provider.dart';
 import 'package:goatvision/data/providers/providers.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -18,6 +19,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final mode = ref.watch(runModeProvider);
+    final themeMode = ref.watch(themeModeProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Configuración')),
@@ -40,6 +42,35 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   if (value != null) {
                     setState(() => _unit = value);
                     AppStorage.setPreferredUnit(value);
+                  }
+                },
+              ),
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.dark_mode_outlined),
+              title: const Text('Tema'),
+              subtitle: Text(_themeLabel(themeMode)),
+              trailing: DropdownButton<ThemeMode>(
+                value: themeMode,
+                items: const [
+                  DropdownMenuItem(
+                    value: ThemeMode.light,
+                    child: Text('Claro'),
+                  ),
+                  DropdownMenuItem(
+                    value: ThemeMode.dark,
+                    child: Text('Oscuro'),
+                  ),
+                  DropdownMenuItem(
+                    value: ThemeMode.system,
+                    child: Text('Sistema'),
+                  ),
+                ],
+                onChanged: (value) {
+                  if (value != null) {
+                    ref.read(themeModeProvider.notifier).state = value;
+                    AppStorage.setThemeMode(themeModeToPref(value));
                   }
                 },
               ),
@@ -99,6 +130,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ),
       ),
     );
+  }
+
+  String _themeLabel(ThemeMode themeMode) {
+    switch (themeMode) {
+      case ThemeMode.dark:
+        return 'Oscuro';
+      case ThemeMode.system:
+        return 'Sigue al sistema';
+      default:
+        return 'Claro';
+    }
   }
 
   void _showModelsModal(BuildContext context) {

@@ -7,6 +7,7 @@ class AppStorage {
 
   static bool hasSeenOnboarding = false;
   static String preferredUnit = 'kg';
+  static String themeMode = 'light';
   static String? _baseDirectory;
 
   static Future<void> initialize() async {
@@ -30,6 +31,8 @@ class AppStorage {
             hasSeenOnboarding = value == 'true';
           case 'preferredUnit':
             preferredUnit = value;
+          case 'themeMode':
+            themeMode = value;
         }
       }
     } catch (_) {}
@@ -43,6 +46,11 @@ class AppStorage {
   static Future<void> setPreferredUnit(String unit) async {
     preferredUnit = unit;
     await _writePrefs({'preferredUnit': unit});
+  }
+
+  static Future<void> setThemeMode(String mode) async {
+    themeMode = mode;
+    await _writePrefs({'themeMode': mode});
   }
 
   static Future<void> _writePrefs(Map<String, String> kv) async {

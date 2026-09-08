@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:goatvision/app/router/app_router.dart';
 import 'package:goatvision/core/theme/app_theme.dart';
+import 'package:goatvision/core/theme/theme_mode_provider.dart';
 
 class GoatVisionApp extends ConsumerWidget {
   const GoatVisionApp({super.key});
@@ -10,13 +11,14 @@ class GoatVisionApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
+    final themeMode = ref.watch(themeModeProvider);
 
     return MaterialApp.router(
       title: 'GoatVision',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
-      themeMode: ThemeMode.light,
+      themeMode: themeMode,
       routerConfig: router,
       locale: const Locale('es', 'MX'),
       supportedLocales: const [

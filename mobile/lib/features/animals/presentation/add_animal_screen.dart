@@ -6,7 +6,11 @@ import 'package:goatvision/domain/entities/animal.dart';
 import 'package:uuid/uuid.dart';
 
 class AddAnimalScreen extends ConsumerStatefulWidget {
-  const AddAnimalScreen({super.key});
+  final Animal? animal;
+
+  const AddAnimalScreen({super.key, this.animal});
+
+  bool get isEditing => animal != null;
 
   @override
   ConsumerState<AddAnimalScreen> createState() => _AddAnimalScreenState();
@@ -20,6 +24,19 @@ class _AddAnimalScreenState extends ConsumerState<AddAnimalScreen> {
 
   String? _sex;
   DateTime? _birthDate;
+
+  @override
+  void initState() {
+    super.initState();
+    final animal = widget.animal;
+    if (animal != null) {
+      _nameController.text = animal.name;
+      _breedController.text = animal.breed ?? '';
+      _notesController.text = animal.notes ?? '';
+      _sex = animal.sex;
+      _birthDate = animal.birthDate;
+    }
+  }
 
   @override
   void dispose() {
@@ -47,8 +64,9 @@ class _AddAnimalScreenState extends ConsumerState<AddAnimalScreen> {
 
     final repo = ref.read(animalRepositoryProvider);
     final now = DateTime.now();
+    final existing = widget.animal;
     final animal = Animal(
-      id: const Uuid().v4(),
+      id: existing?.id ?? const Uuid().v4(),
       name: _nameController.text.trim(),
       breed: _breedController.text.trim().isEmpty
           ? null
@@ -58,7 +76,7 @@ class _AddAnimalScreenState extends ConsumerState<AddAnimalScreen> {
       notes: _notesController.text.trim().isEmpty
           ? null
           : _notesController.text.trim(),
-      createdAt: now,
+      createdAt: existing?.createdAt ?? now,
       updatedAt: now,
     );
 
@@ -70,8 +88,9 @@ class _AddAnimalScreenState extends ConsumerState<AddAnimalScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final editing = widget.isEditing;
     return Scaffold(
-      appBar: AppBar(title: const Text('Nueva cabra')),
+      appBar: AppBar(title: Text(editing ? 'Editar cabra' : 'Nueva cabra')),
       body: SafeArea(
         child: Form(
           key: _formKey,

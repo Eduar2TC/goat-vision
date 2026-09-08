@@ -11,6 +11,7 @@ import 'package:goatvision/features/results/presentation/result_screen.dart';
 import 'package:goatvision/features/history/presentation/history_screen.dart';
 import 'package:goatvision/features/settings/presentation/settings_screen.dart';
 import 'package:goatvision/features/animals/presentation/add_animal_screen.dart';
+import 'package:goatvision/domain/entities/animal.dart';
 import 'package:goatvision/core/storage/app_storage.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -53,6 +54,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             path: ':id',
             builder: (context, state) => AnimalDetailScreen(
               animalId: state.pathParameters['id']!,
+            ),
+          ),
+          GoRoute(
+            path: 'edit',
+            builder: (context, state) => AddAnimalScreen(
+              animal: state.extra as Animal?,
             ),
           ),
         ],

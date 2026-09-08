@@ -17,7 +17,8 @@ final analysisPipelineProvider = Provider<AnalysisPipeline>((ref) {
       '(ver docs/ml/pipeline.md fase 4-8). Mientras tanto usa RunMode.mock.',
     );
   }
-  return AnalysisPipeline.mock();
+  // CV simulado, pero la etapa de peso usa la fórmula de referencia real.
+  return AnalysisPipeline.reference();
 });
 
 final weightPredictionServiceProvider =

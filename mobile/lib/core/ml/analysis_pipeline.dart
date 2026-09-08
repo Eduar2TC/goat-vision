@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'package:goatvision/core/errors/app_exceptions.dart';
 import 'package:goatvision/core/ml/ml_interfaces.dart';
 import 'package:goatvision/core/ml/mock_ml_services.dart';
+import 'package:goatvision/core/ml/reference_weight_predictor.dart';
 import 'package:goatvision/core/utils/app_logger.dart';
 import 'package:goatvision/core/vision/morphometric_calculator.dart';
 import 'package:goatvision/domain/entities/calibration.dart';
@@ -53,6 +54,16 @@ class AnalysisPipeline {
         segmenter: MockGoatSegmenter(),
         landmarkDetector: MockLandmarkDetector(),
         weightPredictor: MockWeightPredictor(),
+        mode: RunMode.mock,
+      );
+
+  /// Dev-mode pipeline whose weight stage uses the published reference
+  /// formula instead of a toy value; CV stages stay simulated.
+  factory AnalysisPipeline.reference() => AnalysisPipeline(
+        detector: MockGoatDetector(),
+        segmenter: MockGoatSegmenter(),
+        landmarkDetector: MockLandmarkDetector(),
+        weightPredictor: ReferenceWeightPredictor(),
         mode: RunMode.mock,
       );
 
