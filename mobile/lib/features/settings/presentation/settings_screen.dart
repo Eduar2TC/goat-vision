@@ -14,7 +14,6 @@ class SettingsScreen extends ConsumerStatefulWidget {
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   late String _unit = AppStorage.preferredUnit;
-  late String _language = AppStorage.preferredLanguage;
 
   @override
   Widget build(BuildContext context) {
@@ -44,18 +43,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   }
                 },
               ),
-            ),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.language),
-              title: const Text('Idioma'),
-              subtitle: Text('$_language'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () {
-                final next = _language == 'Español' ? 'English' : 'Español';
-                setState(() => _language = next);
-                AppStorage.setPreferredLanguage(next);
-              },
             ),
             const Divider(),
             ListTile(

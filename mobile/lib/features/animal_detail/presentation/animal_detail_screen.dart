@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:goatvision/core/constants/app_colors.dart';
+import 'package:goatvision/core/utils/unit_converter.dart';
 import 'package:goatvision/data/repositories/repository_providers.dart';
 import 'package:goatvision/data/repositories/drift_measurement_repository.dart';
 import 'package:goatvision/domain/entities/animal.dart';
@@ -171,7 +172,7 @@ class _WeightChart extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Text(
-            'Peso actual: ≈ ${records.first.estimatedWeightKg.toStringAsFixed(1)} kg',
+            'Peso actual: ≈ ${UnitConverter.weight(records.first.estimatedWeightKg)}',
             style: const TextStyle(fontWeight: FontWeight.bold),
           ),
         ),
@@ -210,7 +211,7 @@ class _WeightChart extends StatelessWidget {
                 ),
                 const Spacer(),
                 Text(
-                  'Último: ≈ ${sorted.last.estimatedWeightKg.toStringAsFixed(1)} kg',
+                  'Último: ≈ ${UnitConverter.weight(sorted.last.estimatedWeightKg)}',
                   style: TextStyle(
                     color: AppColors.primary,
                     fontWeight: FontWeight.w600,
@@ -296,12 +297,12 @@ class _HistoryTile extends StatelessWidget {
       child: ListTile(
         leading: const Icon(Icons.monitor_weight, color: AppColors.primary),
         title: Text(
-          '≈ ${record.estimatedWeightKg.toStringAsFixed(1)} kg',
+          '≈ ${UnitConverter.weight(record.estimatedWeightKg)}',
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         subtitle: Text(
           '${d.day} ${_monthName(d.month)} · '
-          'Rango: ${record.lowerWeightKg.toStringAsFixed(1)}–${record.upperWeightKg.toStringAsFixed(1)} kg',
+          'Rango: ${UnitConverter.range(record.lowerWeightKg, record.upperWeightKg)}',
         ),
         trailing: Text(
           '${(record.confidence * 100).toStringAsFixed(0)}%',

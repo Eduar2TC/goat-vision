@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:goatvision/core/constants/app_colors.dart';
+import 'package:goatvision/core/utils/unit_converter.dart';
 import 'package:goatvision/data/repositories/repository_providers.dart';
 
 class DashboardScreen extends ConsumerWidget {
@@ -72,7 +73,7 @@ class DashboardScreen extends ConsumerWidget {
                   label: 'Peso promedio',
                   value: avgWeight == null
                       ? '—'
-                      : '${avgWeight.toStringAsFixed(1)} kg',
+                      : UnitConverter.weight(avgWeight),
                   color: AppColors.accent,
                 ),
                 const SizedBox(height: 12),
@@ -171,7 +172,7 @@ class _MeasurementTile extends StatelessWidget {
     return Card(
       child: ListTile(
         leading: const Icon(Icons.monitor_weight),
-        title: Text('≈ ${weight.toStringAsFixed(1)} kg'),
+        title: Text('≈ ${UnitConverter.weight(weight)}'),
         subtitle: Text('${ts.day}/${ts.month}/${ts.year}'),
       ),
     );

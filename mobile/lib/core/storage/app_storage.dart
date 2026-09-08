@@ -7,7 +7,6 @@ class AppStorage {
 
   static bool hasSeenOnboarding = false;
   static String preferredUnit = 'kg';
-  static String preferredLanguage = 'Español';
   static String? _baseDirectory;
 
   static Future<void> initialize() async {
@@ -31,8 +30,6 @@ class AppStorage {
             hasSeenOnboarding = value == 'true';
           case 'preferredUnit':
             preferredUnit = value;
-          case 'preferredLanguage':
-            preferredLanguage = value;
         }
       }
     } catch (_) {}
@@ -46,11 +43,6 @@ class AppStorage {
   static Future<void> setPreferredUnit(String unit) async {
     preferredUnit = unit;
     await _writePrefs({'preferredUnit': unit});
-  }
-
-  static Future<void> setPreferredLanguage(String language) async {
-    preferredLanguage = language;
-    await _writePrefs({'preferredLanguage': language});
   }
 
   static Future<void> _writePrefs(Map<String, String> kv) async {

@@ -7,6 +7,7 @@ import 'package:goatvision/data/repositories/drift_measurement_repository.dart';
 import 'package:goatvision/data/repositories/drift_capture_repository.dart';
 import 'package:goatvision/data/repositories/repository_providers.dart';
 import 'package:goatvision/core/utils/app_logger.dart';
+import 'package:goatvision/core/utils/unit_converter.dart';
 import 'package:goatvision/domain/entities/animal.dart';
 import 'package:uuid/uuid.dart';
 
@@ -180,7 +181,7 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              '≈ ${session.estimatedWeightKg.toStringAsFixed(1)} kg',
+              '≈ ${UnitConverter.weight(session.estimatedWeightKg)}',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.displayMedium?.copyWith(
                     fontWeight: FontWeight.bold,
@@ -189,7 +190,7 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Rango: ${session.lowerWeightKg.toStringAsFixed(1)}–${session.upperWeightKg.toStringAsFixed(1)} kg',
+              'Rango: ${UnitConverter.range(session.lowerWeightKg, session.upperWeightKg)}',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.titleMedium,
             ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:goatvision/core/constants/app_colors.dart';
+import 'package:goatvision/core/utils/unit_converter.dart';
 import 'package:goatvision/data/repositories/repository_providers.dart';
 import 'package:goatvision/data/repositories/drift_measurement_repository.dart';
 import 'package:goatvision/domain/entities/animal.dart';
@@ -81,12 +82,12 @@ class HistoryScreen extends ConsumerWidget {
                     ),
                   ),
                   title: Text(
-                    '≈ ${r.estimatedWeightKg.toStringAsFixed(1)} kg',
+                    '≈ ${UnitConverter.weight(r.estimatedWeightKg)}',
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   subtitle: Text(
                     '$animalName · '
-                    '${r.lowerWeightKg.toStringAsFixed(1)}–${r.upperWeightKg.toStringAsFixed(1)} kg',
+                    '${UnitConverter.range(r.lowerWeightKg, r.upperWeightKg)}',
                   ),
                   trailing: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
