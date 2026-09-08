@@ -26,6 +26,12 @@ try:
 except Exception as exc:  # pragma: no cover - sk-learn may be missing
     raise RuntimeError(f"Could not import intervals: {exc}")
 
+from literature.reference_weight import (  # noqa: E402  (numpy-only)
+    estimate_thoracic_girth,
+    predict_weight,
+    validate_features,
+)
+
 
 class TestSplitByAnimal(unittest.TestCase):
     def test_no_leak_between_sets(self):
@@ -203,6 +209,47 @@ class TestAugmentation(unittest.TestCase):
         np.testing.assert_array_equal(res.image, self.img)
         np.testing.assert_allclose(res.bbox, self.bbox, atol=1e-6)
         np.testing.assert_allclose(res.landmarks, self.lm, atol=1e-6)
+
+
+class TestReferenceWeight(unittest.TestCase):
+    """Reference (literature) weight predictor, pure numpy."""
+
+    def test_ellipse_girth_reproduces_study_mean(self):
+        # Paper means: TG = 84.97 cm with CW = 18.98 cm; the ellipse fit sets
+        # chest depth so the Ramanujan perimeter matches the published girth.
+        tg = estimate_thoracic_girth(34.0, 18.98)
+        self.assertAlmostEqual(tg, 84.97, delta=0.5)
+
+    def test_ellipse_girth_spans_study_range(self):
+        lo = estimate_thoracic_girth(22.3, 12.0)
+        hi = estimate_thoracic_girth(44.1, 27.0)
+        self.assertGreaterEqual(lo, 55.0)
+        self.assertLessEqual(hi, 120.0)
+
+    def test_prediction_matches_study_range_at_means(self):
+        res = predict_weight(34.0, 18.98, 72.61, 17.17)
+        self.assertTrue(res["valid"])
+        # BW mean from paper is 48.06 kg; formula gives ~46.9 (within RSE).
+        self.assertAlmostEqual(res["estimated_weight_kg"], 46.9, delta=1.5)
+        self.assertEqual(res["model_version"], "ref-paredes-chocce-2025")
+        self.assertEqual(res["confidence"], 0.644)
+
+    def test_interval_is_symmetric_and_positive(self):
+        res = predict_weight(31.0, 17.0, 68.0, 15.0)
+        half = (res["upper_bound_kg"] - res["lower_bound_kg"]) / 2.0
+        self.assertAlmostEqual(half, 1.2816 * 6.305, places=3)
+        self.assertGreater(res["lower_bound_kg"], 0.0)
+
+    def test_validate_rejects_non_positive_and_out_of_range(self):
+        errors = validate_features(0.0, 18.98, 72.61, 17.17)
+        self.assertTrue(errors)
+        errors = validate_features(34.0, 28.0, 72.61, 17.17)
+        self.assertTrue(any("chest_width_cm" in e for e in errors))
+
+    def test_multiline_equation_monotonic_in_girth(self):
+        small = predict_weight(24.0, 13.0, 60.0, 11.0)["estimated_weight_kg"]
+        big = predict_weight(40.0, 24.0, 80.0, 22.0)["estimated_weight_kg"]
+        self.assertGreater(big, small)
 
 
 if __name__ == "__main__":

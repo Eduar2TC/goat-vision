@@ -65,6 +65,27 @@ Los modelos simulados están claramente separados en
 `lib/core/ml/mock_ml_services.dart` y **nunca deben activarse en producción**
 sin reemplazarlos por los modelos `.tflite` reales.
 
+### Predictor de peso de referencia (literatura)
+
+La estimación de peso **no usa un modelo juguete**: desde la captura y el
+análisis se utiliza `ReferenceWeightPredictor`
+(`lib/core/ml/reference_weight_predictor.dart`), que implementa las
+ecuaciones publicadas de **Paredes-Chocce et al. (2025)**
+(Biodiversitas 26(7), DOI 10.13057/biodiv/d260710, n = 356):
+
+```
+BW (kg) = -45.642 + 0.71·TG + 0.21·RH + 0.99·RW      (R²aj = 0.644, RSE = 6.305 kg)
+```
+
+como el perímetro torácico (TG) no se mide en vista lateral, se **estima**
+con la aproximación de Ramanujan para la elipse del tórax a partir de
+`chest_depth` y `chest_width` (ver `docs/research/research-notes.md`).
+
+⚠️ Es un predictor **honesto y etiquetado**: la confianza refleja el R²
+publicado (0.64) y el intervalo el RSE del estudio, **no** una cobertura
+medida por GoatVision. Cuando se entrene y exporte `goat_weight.tflite`
+con datos propios, sustituye a este fallback.
+
 El modo se controla con `runModeProvider` (`lib/data/providers/providers.dart`).
 `RunMode.real` lanza `UnimplementedError` hasta completar la integración de los
 modelos TFLite: los mocks nunca se activan accidentalmente en producción.

@@ -261,7 +261,9 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
         upperWeightKg: prediction.upperBoundKg,
         confidence: prediction.confidence,
         modelVersion: prediction.modelVersion,
-        datasetVersion: 'mock-dataset',
+        datasetVersion: prediction.modelVersion.startsWith('ref-')
+            ? 'biodiv-d260710'
+            : 'mock-dataset',
         morphometrics: morphologyResult.$1.toMap(),
         timestamp: DateTime.now(),
         imagePath: imagePath,
@@ -328,14 +330,15 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
 
   Future<double> computeWeightFallback() async {
     final result = _computeMorphometrics();
-    final predictor = MockWeightPredictor();
-    final prediction = await predictor.predict(result.$1);
-    return prediction.estimatedWeightKg;
+    final weightResult =
+        await ref.read(weightPredictionServiceProvider).run(result.$1);
+    return weightResult.prediction.estimatedWeightKg;
   }
 
   Future<Prediction> _computePrediction(MorphometricFeatures features) async {
-    final predictor = MockWeightPredictor();
-    return await predictor.predict(features);
+    final weightResult =
+        await ref.read(weightPredictionServiceProvider).run(features);
+    return weightResult.prediction;
   }
 
   @override

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:goatvision/core/ml/analysis_pipeline.dart';
 import 'package:goatvision/core/ml/mock_ml_services.dart';
+import 'package:goatvision/core/ml/reference_weight_predictor.dart';
 import 'package:goatvision/core/ml/weight_prediction_service.dart';
 
 final runModeProvider = StateProvider<RunMode>((ref) => RunMode.mock);
@@ -25,13 +26,17 @@ final weightPredictionServiceProvider =
   final WeightPredictorService predictor;
   if (mode == RunMode.real) {
     // FASE 7-8: WeightPredictorService con el modelo exportado
-    // (goat_weight.tflite). No existe todavía, por eso se lanza error.
+    // (goat_weight.tflite) entrenado con datos propios. Mientras no exista
+    // se usa el predictor de referencia (literatura), nunca en RunMode.real.
     throw UnimplementedError(
       'RunMode.real requiere goat_weight.tflite exportado '
       '(ver ml/export y docs/ml/training.md). Usa RunMode.mock.',
     );
   }
-  predictor = MockWeightPredictor();
+  // Predictor de referencia (ecuaciones publicadas de Paredes-Chocce et al.
+  // 2025). Es un modelo REAL basado en literatura, no un mock: da predicciones
+  // utilizables en producto hasta que se entrene e integre el TFLite propio.
+  predictor = ReferenceWeightPredictor();
   return WeightPredictionService(predictor);
 });
 
