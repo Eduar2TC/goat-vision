@@ -455,21 +455,42 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
 
   Widget _buildBottomControls(BuildContext context) {
     final ready = _qualityReady && !_isCapturing;
+    final mode = ref.watch(runModeProvider);
 
     return Padding(
       padding: const EdgeInsets.all(12),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Positioned(
-            left: 0,
-            right: 0,
-            child: QualityIndicator(
-              goatDetected: _goatDetected,
-              bodyComplete: _bodyComplete,
-              markerDetected: _markerDetected,
-              goodLighting: _goodLighting,
-              validPose: _validPose,
+          if (mode == RunMode.mock)
+            Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 4,
+              ),
+              decoration: BoxDecoration(
+                color: Colors.amber.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.science_outlined, color: Colors.amber, size: 16),
+                  SizedBox(width: 6),
+                  Text(
+                    'Modo desarrollador · CV simulada',
+                    style: TextStyle(color: Colors.amber, fontSize: 12),
+                  ),
+                ],
+              ),
             ),
+          QualityIndicator(
+            goatDetected: _goatDetected,
+            bodyComplete: _bodyComplete,
+            markerDetected: _markerDetected,
+            goodLighting: _goodLighting,
+            validPose: _validPose,
           ),
           const SizedBox(height: 8),
           if (_instruction != null)
