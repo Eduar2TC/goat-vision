@@ -1,0 +1,1 @@
+Placeholder — directorio reservado para imágenes de ejemplo.

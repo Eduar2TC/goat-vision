@@ -1,0 +1,7 @@
+# Dependencias mínimas para ejecutar la suite de tests ML
+# (la suite completa de entrenamiento está en requirements.txt).
+numpy>=1.26
+pandas>=2.2
+scikit-learn>=1.5
+scipy>=1.13
+opencv-python-headless>=4.10
