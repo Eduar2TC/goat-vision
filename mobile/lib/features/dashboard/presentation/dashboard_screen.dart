@@ -171,6 +171,7 @@ class _MeasurementTile extends StatelessWidget {
 
     return Card(
       child: ListTile(
+        onTap: () => context.push('/animals/${rec.animalId}'),
         leading: const Icon(Icons.monitor_weight),
         title: Text('≈ ${UnitConverter.weight(weight)}'),
         subtitle: Text('${ts.day}/${ts.month}/${ts.year}'),

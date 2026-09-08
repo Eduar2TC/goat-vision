@@ -278,7 +278,11 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () => context.go('/capture'),
+                    onPressed: () => context.go(
+                      session.animalId.isEmpty
+                          ? '/capture'
+                          : '/capture?animalId=${session.animalId}',
+                    ),
                     icon: const Icon(Icons.refresh),
                     label: const Text('Repetir'),
                     style: OutlinedButton.styleFrom(

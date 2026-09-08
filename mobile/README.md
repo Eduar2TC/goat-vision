@@ -17,9 +17,12 @@ lib/
 - **Estado:** Riverpod
 - **Navegación:** go_router
 - **Persistencia:** Drift/SQLite
-- **ML:** TFLite (offline). Los modelos `.tflite` aún no están integrados; la app
-  corre en `RunMode.mock` con servicios simulados en
-  `lib/core/ml/mock_ml_services.dart`.
+- **ML:** TFLite (offline). Los modelos `.tflite` aún no están integrados:
+  - La CV (detección/segmentación/landmarks) corre con mocks de desarrollo en
+    `lib/core/ml/mock_ml_services.dart`.
+  - El peso real usa la fórmula de referencia de Paredes-Chocce et al. (2025)
+    en `reference_weight_predictor.dart` (r²=0.644, RSE 6.305 kg); un modelo
+    TFLite propio la sustituirá cuando se integre.
 
 ## Flujo de captura
 

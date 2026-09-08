@@ -16,24 +16,31 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   final _steps = const [
     _OnboardingStep(
-      icon: Icons.pets,
-      title: 'Registra tu cabra',
-      description: 'Crea un perfil para cada cabra con su nombre, raza y edad.',
-    ),
-    _OnboardingStep(
       icon: Icons.camera_alt,
       title: 'Colócala de perfil',
-      description: 'La cabra debe verse de costado, con el cuerpo completo visible.',
+      description:
+          'La cabra debe verse de costado, con el cuerpo completo visible.',
     ),
     _OnboardingStep(
       icon: Icons.crop_square,
       title: 'Coloca el marcador',
-      description: 'Coloca el marcador de calibración junto a la cabra.',
+      description:
+          'Deja el marcador de calibración de 30 cm junto a la cabra.',
     ),
     _OnboardingStep(
       icon: Icons.monitor_weight,
-      title: 'Obtén una estimación',
-      description: 'Captura la foto y obtén una estimación del peso con su rango de incertidumbre.',
+      title: 'Escanea y estima',
+      description:
+          'Captura la foto y obtén al instante el peso estimado con su rango '
+          'de incertidumbre. Sin balanzas ni cintas, todo lo mide la visión '
+          'artificial.',
+    ),
+    _OnboardingStep(
+      icon: Icons.history,
+      title: 'Guarda y da seguimiento',
+      description:
+          'Registra la medición en tu historial. Si escaneas sin elegir cabra '
+          'la registramos por ti; puedes nombrarla después.',
     ),
   ];
 

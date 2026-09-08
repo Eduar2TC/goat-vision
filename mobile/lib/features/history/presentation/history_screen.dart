@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:goatvision/core/constants/app_colors.dart';
 import 'package:goatvision/core/utils/unit_converter.dart';
 import 'package:goatvision/data/repositories/repository_providers.dart';
@@ -52,6 +53,7 @@ class HistoryScreen extends ConsumerWidget {
                 final d = r.timestamp;
                 final animalName = animalById[r.animalId] ?? 'Desconocida';
                 return ListTile(
+                  onTap: () => context.push('/animals/${r.animalId}'),
                   leading: Container(
                     width: 48,
                     height: 48,

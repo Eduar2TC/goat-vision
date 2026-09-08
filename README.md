@@ -180,7 +180,8 @@ cd ml
 python3 -m unittest tests.test_ml        # o: python3 -m unittest ml.tests.test_ml
 ```
 
-Estado actual: 15 tests (7 con numpy puro; 8 condicionales a deps).
+Estado actual: 21 tests (13 con numpy puro, incl. el predictor de
+referencia de literatura; 8 condicionales a deps).
 
 ## Principios
 

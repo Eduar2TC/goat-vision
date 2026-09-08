@@ -1,5 +1,4 @@
 import 'dart:typed_data';
-import 'package:goatvision/core/errors/app_exceptions.dart';
 import 'package:goatvision/core/ml/ml_interfaces.dart';
 import 'package:goatvision/core/ml/mock_ml_services.dart';
 import 'package:goatvision/core/ml/reference_weight_predictor.dart';
