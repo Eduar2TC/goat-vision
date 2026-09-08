@@ -1,4 +1,5 @@
 import 'package:drift/drift.dart';
+import 'package:goatvision/core/storage/image_storage_service.dart';
 import 'package:goatvision/data/database/app_database.dart';
 import 'package:goatvision/domain/entities/animal.dart';
 import 'package:goatvision/domain/repositories/animal_repository.dart';
@@ -47,7 +48,45 @@ class DriftAnimalRepository implements AnimalRepository {
 
   @override
   Future<void> deleteAnimal(String id) async {
-    await (_db.delete(_db.animals)..where((t) => t.id.equals(id))).go();
+    final imagePaths = <String>[];
+    await _db.transaction(() async {
+      final measurements = await (_db.select(_db.measurements)
+            ..where((t) => t.animalId.equals(id)))
+          .get();
+      final measurementIds = measurements.map((m) => m.id).toList();
+
+      if (measurementIds.isNotEmpty) {
+        // Cascade: captures -> morphometrics -> measurements -> animal.
+        final captures = await (_db.select(_db.captures)
+              ..where((t) => t.measurementId.isIn(measurementIds)))
+            .get();
+        imagePaths.addAll(
+          captures.map((c) => c.imagePath).where((p) => p.isNotEmpty),
+        );
+        await (_db.delete(_db.captures)
+              ..where((t) => t.measurementId.isIn(measurementIds)))
+            .go();
+        await (_db.delete(_db.morphometricMeasurements)
+              ..where((t) => t.measurementId.isIn(measurementIds)))
+            .go();
+      }
+
+      await (_db.delete(_db.measurements)
+            ..where((t) => t.animalId.equals(id)))
+          .go();
+      await (_db.delete(_db.animals)..where((t) => t.id.equals(id))).go();
+    });
+
+    // Best-effort physical cleanup of stored capture images.
+    if (imagePaths.isEmpty) return;
+    try {
+      final storage = await ImageStorageService.create();
+      for (final path in imagePaths) {
+        await storage.deleteCapture(path);
+      }
+    } catch (e) {
+      // Image cleanup must never block the DB delete.
+    }
   }
 
   @override

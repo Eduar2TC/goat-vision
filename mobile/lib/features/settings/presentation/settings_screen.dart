@@ -196,38 +196,100 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   void _showScienceInfo(BuildContext context) {
+    final theme = Theme.of(context);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      builder: (context) => Padding(
-        padding: const EdgeInsets.all(16),
-        child: SingleChildScrollView(
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.8,
+        maxChildSize: 0.95,
+        minChildSize: 0.4,
+        expand: false,
+        builder: (context, scrollController) => SingleChildScrollView(
+          controller: scrollController,
+          padding: const EdgeInsets.all(20),
           child: Column(
-            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Información científica',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                'Informe científico',
+                style: theme.textTheme.titleLarge
+                    ?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Modelo de referencia de peso — Paredes-Chocce et al. (2025)',
+                style: theme.textTheme.titleSmall,
               ),
               const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Text(
+                  'BW (kg) = -45.642 + 0.71·TG + 0.21·RH + 0.99·RW\n\n'
+                  'R² ajustado = 0.644 · RSE = 6.305 kg · n = 356',
+                  style: TextStyle(fontFamily: 'monospace', fontSize: 13),
+                ),
+              ),
+              const SizedBox(height: 16),
               const Text(
-                'El peso de la cabra se estima a partir de medidas biométricas '
-                'obtenidas mediante visión artificial:\n\n'
-                '· Longitud corporal\n'
-                '· Altura a la cruz\n'
-                '· Altura de grupa\n'
-                '· Profundidad de pecho\n'
-                '· Anchos de pecho y grupa\n\n'
-                'Las medidas se convierten a centímetros usando un marcador '
-                'de calibración. El peso se calcula con una ecuación de '
-                'regresión publicada (Paredes-Chocce et al. 2025, cabras '
-                'criollas peruanas). Con tus propios datos puedes entrenar un '
-                'modelo personalizado que sustituya esta referencia.\n\n'
-                'El resultado incluye un rango de incertidumbre. '
-                'Este NO es un valor de báscula exacto.',
+                'Cómo se obtienen las medidas\n',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const Text(
+                'Las medidas biométricas (longitud corporal, altura a la '
+                'cruz, altura de grupa, profundidad de pecho, anchos de '
+                'pecho y grupa, etc.) se derivan de la imagen por visión '
+                'artificial; un marcador de 30 cm convierte píxeles a '
+                'centímetros. El perímetro torácico (TG) no es medible en '
+                'una vista lateral, por lo que se estima como el perímetro '
+                'de la elipse del pecho (aproximación de Ramanujan) a partir '
+                'de la profundidad y el ancho del pecho.',
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Para qué animales aplica\n',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const Text(
+                'Cabras criollas peruanas. Rango observado en el estudio: '
+                'peso 23.2–75 kg, perímetro torácico 65–103 cm. La app '
+                'valida las medidas contra estos rangos y avisa si salen '
+                'de ellos.',
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Referencia completa\n',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              SelectableText(
+                'Paredes-Chocce, J. F. et al. (2025). Predicting body weight '
+                'using body measurements in Peruvian creole goats. '
+                'Biodiversitas 26(7): 3193-3198.\n'
+                'DOI: 10.13057/biodiv/d260710',
+                style: theme.textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Advertencias',
+                style: theme.textTheme.titleSmall
+                    ?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                '· La estimación NO es un valor de báscula.\n'
+                '· La confianza (64%) y el intervalo provienen del R² y el '
+                'RSE publicados; NO son una cobertura (PICP) medida por '
+                'GoatVision con sus propios datos.\n'
+                '· Para tu rebaño puede ser más precisa: entrena un modelo '
+                'con tus propios datos (medidas + peso real en báscula) y '
+                'sustituirá a esta referencia.\n'
+                '· El error crece con iluminación pobre y condiciones '
+                'extremas del animal.',
               ),
             ],
           ),

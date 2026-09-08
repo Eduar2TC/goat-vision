@@ -33,6 +33,19 @@ capture → analysis → result → Guardar
 La imagen se persiste en el momento de la captura; al pulsar **Guardar** en la
 pantalla de resultados se persisten medición + medidas biométricas + captura.
 
+## Funcionalidades
+
+- **Escaneo rápido:** "Escanear cabra" en el dashboard captura sin animal
+  previo; al guardar se auto-registra una cabra "sin registrar · fecha".
+- **Cabras:** alta/edición (`AddAnimalScreen`, ruta `/animals/edit`) y
+  **borrado en cascada** desde el detalle (mediciones, medidas, capturas e
+  imágenes en transacción, con confirmación).
+- **Historial:** lista de mediciones con **búsqueda por nombre o peso**;
+  cada entrada navega al detalle de la cabra.
+- **Ajustes:** unidad kg/lb y tema claro/oscuro/sistema persistidos en
+  `AppStorage`; estado de modelos real/pendiente; **informe científico**
+  (ecuación, R²/RSE, rangos, DOI copiable y advertencias honestas).
+
 ## Generación de código
 
 Drift y dependencias generan `*.g.dart` / `*.freezed.dart` (en `.gitignore`,

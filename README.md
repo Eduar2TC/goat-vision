@@ -18,12 +18,18 @@ CÁMARA → DETECCIÓN → SEGMENTACIÓN → LANDMARKS → CALIBRACIÓN
 Uso sin herramientas: el dashboard ofrece **"Escanear cabra"** (captura
 directa sin crear antes un animal). Al guardar, si no se eligió cabra, se
 registra una ligera "Cabra sin registrar · fecha" que puede renombrarse desde
-su detalle (botón editar, `/animals/edit`). Ninguna medida ni peso se
-introduce a mano.
+su detalle (botón editar, `/animals/edit`). Cada cabra puede **eliminarse con
+borrado en cascada** (mediciones + medidas + capturas e imágenes) desde su
+detalle, con confirmación. Ninguna medida ni peso se introduce a mano.
+
+Historial: lista todas las mediciones con **búsqueda por nombre de cabra o
+peso aproximado**, y cada entrada navega al detalle de su cabra.
 
 Ajustes: unidad kg/lb aplicada en toda la UI, tema claro/oscuro/sistema
-persistido, y detalle honesto del estado de los modelos (los tres CV son
-mocks de desarrollo; el peso usa la fórmula de referencia publicada).
+persistido, detalle honesto del estado de los modelos (los tres CV son mocks
+de desarrollo; el peso usa la fórmula de referencia publicada) e **informe
+científico** completo (ecuación, R²/RSE, rango de aplicación, cita y DOI
+copiable, y advertencias de incertidumbre).
 
 ## Estructura del repositorio
 

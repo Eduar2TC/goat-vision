@@ -13,6 +13,42 @@ class AnimalDetailScreen extends ConsumerWidget {
 
   const AnimalDetailScreen({super.key, required this.animalId});
 
+  Future<void> _confirmDelete(
+    BuildContext context,
+    WidgetRef ref, {
+    required Animal animal,
+    required int measurementCount,
+  }) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Eliminar cabra'),
+        content: Text(
+          measurementCount == 0
+              ? 'Se eliminará "${animal.name}" de tu lista. '
+                  'Esta acción no se puede deshacer.'
+              : 'Se eliminará "${animal.name}" junto con sus '
+                  '$measurementCount medición(es) y sus imágenes. '
+                  'Esta acción no se puede deshacer.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !context.mounted) return;
+    await ref.read(animalRepositoryProvider).deleteAnimal(animal.id);
+    if (context.mounted) context.go('/animals');
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final animalRepo = ref.watch(animalRepositoryProvider);
@@ -52,7 +88,18 @@ class AnimalDetailScreen extends ConsumerWidget {
             return ListView(
               padding: const EdgeInsets.only(bottom: 88),
               children: [
-                _Header(animal: animal, onEdit: () => context.push('/animals/edit', extra: animal)),
+                _Header(
+                      animal: animal,
+                      measurementCount: records.length,
+                      onEdit: () =>
+                          context.push('/animals/edit', extra: animal),
+                      onDelete: () => _confirmDelete(
+                        context,
+                        ref,
+                        animal: animal,
+                        measurementCount: records.length,
+                      ),
+                    ),
                 const SizedBox(height: 8),
                 if (records.isNotEmpty) _WeightChart(records: records),
                 const SizedBox(height: 8),
@@ -87,8 +134,16 @@ class AnimalDetailScreen extends ConsumerWidget {
 
 class _Header extends StatelessWidget {
   final Animal animal;
+  final int measurementCount;
   final VoidCallback onEdit;
-  const _Header({required this.animal, required this.onEdit});
+  final VoidCallback onDelete;
+
+  const _Header({
+    required this.animal,
+    required this.measurementCount,
+    required this.onEdit,
+    required this.onDelete,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -131,6 +186,14 @@ class _Header extends StatelessWidget {
                 icon: const Icon(Icons.edit_outlined),
                 tooltip: 'Editar cabra',
                 onPressed: onEdit,
+              ),
+              IconButton(
+                icon: const Icon(Icons.delete_outline),
+                tooltip: measurementCount == 0
+                    ? 'Eliminar cabra'
+                    : 'Eliminar cabra y sus $measurementCount mediciones',
+                color: Theme.of(context).colorScheme.error,
+                onPressed: onDelete,
               ),
             ],
           ),
