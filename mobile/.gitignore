@@ -1,0 +1,40 @@
+# Dart
+.dart_tool/
+.packages
+build/
+.dart_tool/
+.packages
+build/
+
+# Flutter
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub/
+pubspec.lock
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Generated
+*.g.dart
+*.freezed.dart
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Android
+android/.gradle/
+android/captures/
+android/gradlew
+android/gradlew.bat
+android/local.properties
+android/**/GeneratedPluginRegistrant.java
+android/key.properties
+*.jks
+*.keystore
+
+# iOS (not used but just in case)
+ios/

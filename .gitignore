@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# ML generated artifacts
+ml/dataset/raw/
+ml/dataset/annotations/
+ml/dataset/metadata/
+ml/dataset/features*.csv
+ml/dataset/splits/
+ml/models/*.joblib
+ml/models/*.tflite
+ml/models/*.onnx
+ml/experiments/*/
+!ml/experiments/__init__.py
+
+# IDE / OS
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+
+# Editor backups
+*~
+*.swp

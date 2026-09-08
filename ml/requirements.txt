@@ -1,0 +1,12 @@
+numpy>=1.26
+pandas>=2.2
+scikit-learn>=1.5
+opencv-python>=4.10
+scipy>=1.13
+xgboost>=2.0
+onnxruntime>=1.18
+matplotlib>=3.9
+jupyterlab>=4.2
+tensorflow>=2.16
+onnx2tf>=1.20
+protobuf>=4.25

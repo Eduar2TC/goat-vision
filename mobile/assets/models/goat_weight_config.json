@@ -1,0 +1,29 @@
+{
+  "model": {
+    "modelVersion": "goat-weight-v1.0",
+    "algorithm": "SVR",
+    "trainingDate": "2026-09-01",
+    "datasetVersion": "goat-dataset-2026-09",
+    "features": [
+      "body_length",
+      "withers_height",
+      "rump_height",
+      "chest_depth",
+      "chest_width",
+      "rump_width",
+      "rump_length",
+      "paw_height"
+    ],
+    "featureCount": 8,
+    "inputShape": [1, 8],
+    "outputShape": [1, 3],
+    "quantization": "INT8",
+    "inferenceTimeTargetMs": 50
+  },
+  "metrics": {
+    "mae": null,
+    "rmse": null,
+    "mape": null,
+    "r2": null
+  }
+}
