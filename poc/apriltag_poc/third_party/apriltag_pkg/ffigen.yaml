@@ -1,0 +1,74 @@
+# Run with `dart run ffigen --config ffigen.yaml`.
+name: NativeApriltag
+description: |
+  Bindings for `apriltag`.
+
+  Regenerate bindings with `dart run ffigen --config ffigen.yaml`.
+output: "lib/src/g/apriltag.g.dart"
+ffi-native:
+  asset-id: "package:apriltag/apriltag.dart"
+compiler-opts:
+  - "-Isrc -Isrc/apriltag"
+  # - "-U_MSC_VER" # HALIDE_ATTRIBUTE_ALIGN(1) uint8_t code; // halide_type_code_t
+  # - "-fdeclspec"
+sort: true
+silence-enum-warning: true
+include-unused-typedefs: false
+headers:
+  entry-points:
+    - "src/apriltag/apriltag_dart_api.h"
+    - "src/apriltag/apriltag.h"
+    # - "src/apriltag/apriltag_math.h"
+    - "src/apriltag/apriltag_pose.h"
+    - "src/apriltag/tag16h5.h"
+    - "src/apriltag/tag25h9.h"
+    - "src/apriltag/tag36h10.h"
+    - "src/apriltag/tag36h11.h"
+    - "src/apriltag/tagCircle21h7.h"
+    - "src/apriltag/tagCustom48h12.h"
+    - "src/apriltag/tagCircle49h12.h"
+    - "src/apriltag/tagStandard41h12.h"
+    - "src/apriltag/tagStandard52h13.h"
+    - "src/apriltag/common/image_u8.h"
+    - "src/apriltag/common/matd.h"
+  include-directives:
+    - "src/apriltag/apriltag_dart_api.h"
+    - "src/apriltag/apriltag.h"
+    # - "src/apriltag/apriltag_math.h"
+    - "src/apriltag/apriltag_pose.h"
+    - "src/apriltag/tag16h5.h"
+    - "src/apriltag/tag25h9.h"
+    - "src/apriltag/tag36h10.h"
+    - "src/apriltag/tag36h11.h"
+    - "src/apriltag/tagCircle21h7.h"
+    - "src/apriltag/tagCustom48h12.h"
+    - "src/apriltag/tagCircle49h12.h"
+    - "src/apriltag/tagStandard41h12.h"
+    - "src/apriltag/tagStandard52h13.h"
+    - "src/apriltag/common/image_u8.h"
+    - "src/apriltag/common/matd.h"
+structs:
+  exclude:
+    - "halide_type_t"
+functions:
+  leaf:
+    include:
+      - "mnn_halide_type_.*"
+    exclude:
+      - "mnn_tensor_create.*"
+  symbol-address:
+    include:
+      - ".*destroy.*"
+      - ".*free.*"
+enums:
+  rename:
+    "halide_type_code_t": "HalideTypeCode"
+
+preamble: |
+  // coverage:ignore-file
+  // Copyright (c) 2025, rainyl.  Please see the AUTHORS file
+  // for details. All rights reserved. Use of this source code is governed by a
+  // BSD-style license that can be found in the LICENSE file.
+comments:
+  style: any
+  length: full
