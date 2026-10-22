@@ -159,7 +159,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   void _showModelsModal(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      builder: (context) => Padding(
+      builder: (context) => SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisSize: MainAxisSize.min,

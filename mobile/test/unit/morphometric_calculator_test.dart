@@ -10,6 +10,7 @@ Calibration _calibration() => Calibration(
       cmPerPixel: 0.1,
       confidence: 0.9,
       timestamp: DateTime(2026, 9, 7),
+      method: 'marker',
     );
 
 void main() {
@@ -94,6 +95,12 @@ void main() {
           type: LandmarkType.tailBase,
           x: 400,
           y: 60,
+          confidence: 0.9,
+        ),
+        const Landmark(
+          type: LandmarkType.hoof,
+          x: 100,
+          y: 300,
           confidence: 0.9,
         ),
       ];

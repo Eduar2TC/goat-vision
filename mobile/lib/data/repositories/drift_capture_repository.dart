@@ -87,6 +87,27 @@ class DriftCaptureRepository {
     );
   }
 
+  /// Capturas indexadas por su id (la FK real: Measurements.captureId
+  /// apunta al id de la captura). Para el historial: método de
+  /// calibración y escala cm/px de cada registro en una sola consulta.
+  Future<Map<String, CaptureRecord>> getCapturesById() async {
+    final rows = await _db.select(_db.captures).get();
+    return {
+      for (final r in rows) r.id: CaptureRecord(
+        id: r.id,
+        measurementId: r.measurementId,
+        imagePath: r.imagePath,
+        viewType: r.viewType,
+        imageWidth: r.imageWidth,
+        imageHeight: r.imageHeight,
+        calibrationMethod: r.calibrationMethod,
+        calibrationScale: r.calibrationScale,
+        qualityScore: r.qualityScore,
+        createdAt: r.createdAt,
+      ),
+    };
+  }
+
   Future<List<String>> getAllImagePaths() async {
     final rows = await _db.select(_db.captures).get();
     return rows.where((r) => r.imagePath.isNotEmpty).map((r) => r.imagePath).toList();

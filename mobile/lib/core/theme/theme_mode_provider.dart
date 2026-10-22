@@ -24,6 +24,6 @@ String themeModeToPref(ThemeMode mode) {
   }
 }
 
-final themeModeProvider = StateProvider<ThemeMode>(
-  (ref) => _fromPref(AppStorage.themeMode),
-);
+final themeModeProvider = StateProvider<ThemeMode>((ref) {
+  return _fromPref(AppStorage.themeMode);
+});

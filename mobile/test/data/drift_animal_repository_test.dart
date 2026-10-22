@@ -3,7 +3,6 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:goatvision/data/database/app_database.dart';
 import 'package:goatvision/data/repositories/drift_animal_repository.dart';
-import 'package:goatvision/domain/entities/animal.dart';
 
 void main() {
   late AppDatabase db;

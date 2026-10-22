@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:goatvision/core/storage/app_storage.dart';
 import 'package:goatvision/core/storage/dataset_log_format.dart';
+import 'package:goatvision/core/utils/app_logger.dart';
 
 /// Persistencia del dataset recolectado en modo desarrollador.
 ///
@@ -22,8 +23,9 @@ class DatasetLogService {
         mode: FileMode.append,
         flush: true,
       );
-    } catch (_) {
-      // Best effort: fallar en silencio no debe afectar el guardado normal.
+    } catch (e) {
+      // Dev tool: registrar el fallo sin bloquear el guardado normal.
+      AppLogger.instance.warning('DatasetLogService.append error: $e');
     }
   }
 
@@ -37,10 +39,12 @@ class DatasetLogService {
         if (line.trim().isEmpty) continue;
         final decoded = jsonDecode(line);
         if (decoded is Map<String, dynamic>) {
-          rows.add(decoded.map((k, v) => MapEntry(k, v ?? '')));
+          // Preserve null values for numeric fields, don't convert to empty string
+          rows.add(Map<String, Object>.from(decoded));
         }
       }
-    } catch (_) {
+    } catch (e) {
+      AppLogger.instance.warning('DatasetLogService.readRows error: $e');
       return rows;
     }
     return rows;

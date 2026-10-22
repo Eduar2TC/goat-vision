@@ -1,12 +1,9 @@
 import 'dart:math';
 import 'package:goatvision/core/ml/ml_interfaces.dart';
-import 'package:goatvision/core/ml/mock_ml_services.dart';
 import 'package:goatvision/domain/entities/morphometric_features.dart';
 import 'package:goatvision/domain/entities/prediction.dart';
 import 'package:goatvision/domain/entities/calibration.dart';
-import 'package:goatvision/domain/entities/landmark.dart';
 import 'package:goatvision/core/utils/range_validator.dart';
-import 'package:flutter/foundation.dart';
 
 class WeightPredictionResult {
   final Prediction prediction;
@@ -36,7 +33,7 @@ class WeightPredictionService {
 
     if (!allValid) {
       return WeightPredictionResult(
-        prediction: Prediction(
+        prediction: const Prediction(
           estimatedWeightKg: 0,
           lowerBoundKg: 0,
           upperBoundKg: 0,

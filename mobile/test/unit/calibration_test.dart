@@ -52,7 +52,7 @@ void main() {
         () async {
       final calibration = await provider.calibrate(
         markerWidthPixels: 600,
-        markerHeightPixels: 480,
+        markerHeightPixels: 540,
         realWidthCm: 30,
       );
       expect(calibration.confidence, lessThan(0.9));
@@ -60,7 +60,7 @@ void main() {
   });
 
   group('Calibration entity', () {
-    test('stores timestamp', () {
+    test('stores timestamp and method', () {
       final now = DateTime(2026, 9, 7);
       final calibration = Calibration(
         markerWidthPixels: 100,
@@ -69,9 +69,28 @@ void main() {
         cmPerPixel: 0.3,
         confidence: 0.9,
         timestamp: now,
+        method: 'marker',
       );
+
       expect(calibration.timestamp, now);
+      expect(calibration.method, 'marker');
       expect(calibration.pixelsToCm(10), 3.0);
+    });
+
+    test('providers stamp their own method', () async {
+      final marker = await MarkerCalibrationProvider().calibrate(
+        markerWidthPixels: 100,
+        markerHeightPixels: 100,
+        realWidthCm: 30,
+      );
+      expect(marker.method, 'marker');
+
+      final manual = await ManualCalibrationProvider().calibrate(
+        markerWidthPixels: 100,
+        markerHeightPixels: 100,
+        realWidthCm: 30,
+      );
+      expect(manual.method, 'manual');
     });
   });
 }

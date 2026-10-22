@@ -173,7 +173,7 @@ class DriftMeasurementRepository {
     await (_db.delete(_db.measurements)..where((t) => t.id.equals(id))).go();
   }
 
-  MeasurementRecord _toRecord(MeasurementRow row) {
+  MeasurementRecord _toRecord(Measurement row) {
     return MeasurementRecord(
       id: row.id,
       animalId: row.animalId,

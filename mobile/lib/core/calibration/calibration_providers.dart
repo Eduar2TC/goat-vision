@@ -35,14 +35,11 @@ class MarkerCalibrationProvider implements CalibrationProviderService {
         : 1.0;
 
     const idealAspectRatio = 1.0;
-    final perspectivePenalty = ((aspectRatio - idealAspectRatio).abs() * 50)
-        .clamp(0.0, 1.0)
-        .toDouble();
+    // Penalty proportional to deviation from square, max 0.5 penalty
+    final perspectivePenalty =
+        ((aspectRatio - idealAspectRatio).abs() * 2.5).clamp(0.0, 0.5).toDouble();
 
     var confidence = 0.9 - perspectivePenalty;
-    if (perspectivePenalty > 0.3) {
-      throw const CalibrationError('marker has too much perspective distortion');
-    }
     confidence = confidence.clamp(0.4, 1.0).toDouble();
 
     return Calibration(
@@ -52,6 +49,8 @@ class MarkerCalibrationProvider implements CalibrationProviderService {
       cmPerPixel: cmPerPixel,
       confidence: confidence,
       timestamp: DateTime.now(),
+      // Método real usado: el nombre del propio proveedor ('marker').
+      method: name,
     );
   }
 
@@ -90,6 +89,8 @@ class ManualCalibrationProvider implements CalibrationProviderService {
       cmPerPixel: realWidthCm / markerWidthPixels,
       confidence: 0.8,
       timestamp: DateTime.now(),
+      // Método real usado: el nombre del propio proveedor ('manual').
+      method: name,
     );
   }
 
@@ -136,7 +137,13 @@ class CalibrationRegistry {
 
   CalibrationRegistry(this._providers);
 
-  CalibrationProviderService? get(String name) => _providers[name];
+  CalibrationProviderService get(String name) {
+    final provider = _providers[name];
+    if (provider == null) {
+      throw CalibrationError('Unknown calibration provider: $name');
+    }
+    return provider;
+  }
 
   List<String> get availableProviders => _providers.keys.toList();
 

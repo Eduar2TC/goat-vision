@@ -29,7 +29,7 @@ void main() {
       findsOneWidget,
     );
     expect(
-      find.textContaining('no es un valor de báscula'),
+      find.textContaining('La estimación NO es un valor de báscula'),
       findsOneWidget,
     );
   });

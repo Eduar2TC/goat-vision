@@ -1,26 +1,36 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:goatvision/core/ml/analysis_pipeline.dart';
+import 'package:goatvision/core/ml/aruco_marker_detector.dart';
+import 'package:goatvision/core/ml/marker_detector.dart';
+import 'package:goatvision/core/ml/ml_interfaces.dart';
 import 'package:goatvision/core/ml/mock_ml_services.dart';
 import 'package:goatvision/core/ml/reference_weight_predictor.dart';
 import 'package:goatvision/core/ml/weight_prediction_service.dart';
+import 'package:goatvision/domain/entities/calibration.dart';
 
 export 'package:goatvision/core/ml/analysis_pipeline.dart'
     show AnalysisPipeline, RunMode;
 
 final runModeProvider = StateProvider<RunMode>((ref) => RunMode.mock);
 
+final markerDetectorProvider = Provider<MarkerDetectorService>((ref) {
+  final mode = ref.watch(runModeProvider);
+  return switch (mode) {
+    // Detección real vía FFI OpenCV ArUco (tag36h11).
+    RunMode.real => ArucoMarkerDetector(),
+    RunMode.mock => const MockMarkerDetector(),
+  };
+});
+
 final analysisPipelineProvider = Provider<AnalysisPipeline>((ref) {
   final mode = ref.watch(runModeProvider);
   if (mode == RunMode.real) {
-    // FASE 4-8: construir AnalysisPipeline con los modelos TFLite reales
-    // (goat_detector/segmenter/landmarks/weight) cuando existan.
     throw UnimplementedError(
       'RunMode.real requiere integrar los modelos TFLite '
       '(ver docs/ml/pipeline.md fase 4-8). Mientras tanto usa RunMode.mock.',
     );
   }
-  // CV simulado, pero la etapa de peso usa la fórmula de referencia real.
   return AnalysisPipeline.reference();
 });
 
@@ -29,17 +39,11 @@ final weightPredictionServiceProvider =
   final mode = ref.watch(runModeProvider);
   final WeightPredictorService predictor;
   if (mode == RunMode.real) {
-    // FASE 7-8: WeightPredictorService con el modelo exportado
-    // (goat_weight.tflite) entrenado con datos propios. Mientras no exista
-    // se usa el predictor de referencia (literatura), nunca en RunMode.real.
     throw UnimplementedError(
       'RunMode.real requiere goat_weight.tflite exportado '
       '(ver ml/export y docs/ml/training.md). Usa RunMode.mock.',
     );
   }
-  // Predictor de referencia (ecuaciones publicadas de Paredes-Chocce et al.
-  // 2025). Es un modelo REAL basado en literatura, no un mock: da predicciones
-  // utilizables en producto hasta que se entrene e integre el TFLite propio.
   predictor = ReferenceWeightPredictor();
   return WeightPredictionService(predictor);
 });
@@ -55,6 +59,7 @@ class AnalysisSessionState {
   final Map<String, double> morphometrics;
   final DateTime timestamp;
   final String? imagePath;
+  final Calibration calibration;
 
   const AnalysisSessionState({
     required this.animalId,
@@ -67,6 +72,7 @@ class AnalysisSessionState {
     required this.morphometrics,
     required this.timestamp,
     this.imagePath,
+    required this.calibration,
   });
 }
 

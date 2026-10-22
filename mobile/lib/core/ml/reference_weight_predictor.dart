@@ -100,10 +100,11 @@ class ReferenceWeightPredictor implements WeightPredictorService {
 
   @override
   Future<ModelInfo> getModelInfo() async {
+    final trainingDate = DateTime(2025, 7);
     return ModelInfo(
       modelVersion: modelVersion,
       datasetVersion: datasetVersion,
-      trainingDate: DateTime(2025, 7),
+      trainingDate: trainingDate,
       algorithm: 'Multiple linear regression (stepwise) — Paredes-Chocce '
           'et al. (2025), Biodiversitas 26(7), DOI 10.13057/biodiv/d260710',
       features: const [
@@ -112,7 +113,7 @@ class ReferenceWeightPredictor implements WeightPredictorService {
         'rump_height_cm',
         'rump_width_cm',
       ],
-      metrics: const {
+      metrics: <String, double>{
         'r2': r2Adjusted,
         'rse': rseKg,
         'n_samples': nSamples.toDouble(),

@@ -23,17 +23,12 @@ class GoatMaskOverlay extends CustomPainter {
       ..color = const Color(0x552E7D32)
       ..style = PaintingStyle.fill;
 
-    final borderPaint = Paint()
-      ..color = const Color(0xCC2E7D32)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
-
     final stepX = scaleX > 2 ? 2 : 1;
     final stepY = scaleY > 2 ? 2 : 1;
 
     for (int y = 0; y < maskHeight; y += stepY) {
       for (int x = 0; x < maskWidth; x += stepX) {
-        if (mask[y][x]) {
+        if (mask![y][x]) {
           canvas.drawRect(
             Rect.fromLTWH(
               x * scaleX,

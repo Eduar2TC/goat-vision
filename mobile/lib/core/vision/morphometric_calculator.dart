@@ -7,7 +7,7 @@ class MorphometricCalculator {
   MorphometricCalculator._();
 
   static double _distance(Point<double> a, Point<double> b) {
-    return sqrt(pow(b.dx - a.dx, 2) + pow(b.dy - a.dy, 2));
+    return sqrt(pow(b.x - a.x, 2) + pow(b.y - a.y, 2));
   }
 
   static Landmark? _get(List<Landmark> landmarks, LandmarkType type) {
