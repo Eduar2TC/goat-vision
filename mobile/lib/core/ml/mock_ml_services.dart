@@ -227,6 +227,7 @@ class MockWeightPredictor implements WeightPredictorService {
 class MockMarkerDetector implements MarkerDetectorService {
   const MockMarkerDetector();
 
+  @override
   Future<(double, double, double)> detectMarker(
     Uint8List imageBytes,
     int width,

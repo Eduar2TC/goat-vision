@@ -206,7 +206,7 @@ class _CalibrationChip extends StatelessWidget {
       ),
       child: Text(
         hasScale
-            ? '$method · ${capture!.calibrationScale.toStringAsFixed(3)} cm/px'
+            ? '$method · ${capture.calibrationScale.toStringAsFixed(3)} cm/px'
             : 'Calibración sin escala',
         style: TextStyle(
           fontSize: 11,

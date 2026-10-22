@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:goatvision/core/ml/analysis_pipeline.dart';
 import 'package:goatvision/core/ml/aruco_marker_detector.dart';

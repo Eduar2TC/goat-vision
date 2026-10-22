@@ -301,15 +301,15 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
+                    const Row(
                       children: [
                         Icon(
                           Icons.data_object,
                           size: 18,
                           color: AppColors.warning,
                         ),
-                        const SizedBox(width: 8),
-                        const Expanded(
+                        SizedBox(width: 8),
+                        Expanded(
                           child: Text(
                             'Recolección de dataset (desarrollador)',
                             style: TextStyle(fontWeight: FontWeight.bold),

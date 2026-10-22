@@ -7,8 +7,6 @@ class ImageStorageService {
   ImageStorageService._(this._baseDir);
 
   final String _baseDir;
-  static ImageStorageService? _instance;
-
   static Future<ImageStorageService> create() async {
     final baseDir = AppStorage.capturesDirectory;
     final dir = Directory(baseDir);

@@ -5,7 +5,6 @@ import 'package:goatvision/core/ml/mock_ml_services.dart';
 import 'package:goatvision/core/ml/weight_prediction_service.dart';
 import 'package:goatvision/core/vision/morphometric_calculator.dart';
 import 'package:goatvision/domain/entities/calibration.dart';
-import 'package:goatvision/domain/entities/detection.dart';
 import 'package:goatvision/domain/entities/landmark.dart';
 import 'package:goatvision/domain/entities/morphometric_features.dart';
 
@@ -36,7 +35,7 @@ void main() {
     test('validates features before prediction', () async {
       final service = WeightPredictionService(MockWeightPredictor());
 
-      final invalidFeatures = MorphometricFeatures(
+      const invalidFeatures = MorphometricFeatures(
         bodyLengthCm: 0,
         withersHeightCm: 0,
         rumpHeightCm: 0,

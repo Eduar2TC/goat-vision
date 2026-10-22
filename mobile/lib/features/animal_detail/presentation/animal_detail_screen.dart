@@ -281,7 +281,7 @@ class _WeightChart extends StatelessWidget {
                 const Spacer(),
                 Text(
                   'Último: ≈ ${UnitConverter.weight(sorted.last.estimatedWeightKg)}',
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: AppColors.primary,
                     fontWeight: FontWeight.w600,
                   ),

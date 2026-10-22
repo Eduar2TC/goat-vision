@@ -1,6 +1,5 @@
 import 'package:drift/drift.dart';
 import 'package:goatvision/data/database/app_database.dart';
-import 'package:goatvision/domain/entities/model_info.dart';
 import 'package:goatvision/domain/entities/morphometric_features.dart';
 import 'package:goatvision/domain/entities/prediction.dart';
 

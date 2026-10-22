@@ -7,7 +7,6 @@ import 'package:goatvision/domain/entities/calibration.dart';
 import 'package:goatvision/domain/entities/detection.dart';
 import 'package:goatvision/domain/entities/landmark.dart';
 import 'package:goatvision/domain/entities/morphometric_features.dart';
-import 'package:goatvision/domain/entities/prediction.dart';
 
 class AnalysisStageResult {
   final String stageName;
@@ -19,13 +18,11 @@ class AnalysisStageResult {
     required this.detail,
   });
 
-  const AnalysisStageResult.success(this.stageName, String detail)
-      : success = true,
-        detail = detail;
+  const AnalysisStageResult.success(this.stageName, this.detail)
+      : success = true;
 
-  const AnalysisStageResult.failure(this.stageName, String detail)
-      : success = false,
-        detail = detail;
+  const AnalysisStageResult.failure(this.stageName, this.detail)
+      : success = false;
 }
 
 enum RunMode { mock, real }
@@ -117,7 +114,7 @@ class AnalysisPipeline {
           (sum, row) => sum + row.where((v) => v > 0).length,
         );
         stages.add(AnalysisStageResult.success('silueta',
-            'Silueta analizada (${area} px)'));
+            'Silueta analizada ($area px)'));
       }
     } catch (e) {
       AppLogger.instance.error('Segmentation stage failed', error: e);

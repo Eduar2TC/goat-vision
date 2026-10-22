@@ -1,6 +1,4 @@
 import 'package:goatvision/domain/entities/animal.dart';
-import 'package:goatvision/domain/repositories/animal_repository.dart';
-import 'package:goatvision/domain/repositories/measurement_repository.dart';
 
 class SaveMeasurementUseCase {
   final dynamic measurementRepository;

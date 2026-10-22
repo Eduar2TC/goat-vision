@@ -1,6 +1,5 @@
 import 'dart:typed_data';
 import 'package:goatvision/domain/entities/detection.dart';
-import 'package:goatvision/domain/entities/landmark.dart';
 import 'package:goatvision/domain/entities/model_info.dart';
 import 'package:goatvision/domain/entities/morphometric_features.dart';
 import 'package:goatvision/domain/entities/prediction.dart';

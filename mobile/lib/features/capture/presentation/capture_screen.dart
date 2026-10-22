@@ -12,7 +12,6 @@ import 'package:goatvision/core/storage/image_storage_service.dart';
 import 'package:goatvision/core/utils/app_logger.dart';
 import 'package:goatvision/core/vision/morphometric_calculator.dart';
 import 'package:goatvision/domain/entities/calibration.dart';
-import 'package:goatvision/domain/entities/detection.dart';
 import 'package:goatvision/domain/entities/landmark.dart';
 import 'package:goatvision/domain/entities/morphometric_features.dart';
 import 'package:goatvision/domain/entities/prediction.dart';
@@ -37,9 +36,9 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
   bool _isInitializing = true;
   String? _error;
 
-  GoatDetectorService _detector = MockGoatDetector();
-  MockGoatSegmenter _segmenter = MockGoatSegmenter();
-  MockLandmarkDetector _landmarkDetector = MockLandmarkDetector();
+  final GoatDetectorService _detector = MockGoatDetector();
+  final MockGoatSegmenter _segmenter = MockGoatSegmenter();
+  final MockLandmarkDetector _landmarkDetector = MockLandmarkDetector();
 
   List<Rect> _boundingBoxes = [];
   List<double> _confidences = [];
@@ -62,7 +61,7 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
 
   bool _goatDetected = false;
   bool _bodyComplete = false;
-  bool _goodLighting = true;
+  final bool _goodLighting = true;
   bool _validPose = false;
   String? _instruction;
   bool _qualityReady = false;
@@ -315,10 +314,6 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
 
       final imageFile = File(xfile.path);
       final bytes = await imageFile.readAsBytes();
-
-      final size = _controller!.value.previewSize;
-      final imageWidth = size?.width.toInt() ?? 1920;
-      final imageHeight = size?.height.toInt() ?? 1080;
 
       final morphologyResult = _computeMorphometrics();
 

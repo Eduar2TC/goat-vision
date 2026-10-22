@@ -63,7 +63,7 @@ class ReferenceWeightPredictor implements WeightPredictorService {
         0.71 * tg +
         0.21 * features.rumpHeightCm +
         0.99 * features.rumpWidthCm;
-    final halfInterval = _p80Z * rseKg;
+    const halfInterval = _p80Z * rseKg;
     return Prediction(
       estimatedWeightKg: estimated,
       lowerBoundKg: estimated - halfInterval,

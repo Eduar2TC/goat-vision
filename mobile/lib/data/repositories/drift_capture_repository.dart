@@ -1,4 +1,3 @@
-import 'package:drift/drift.dart';
 import 'package:goatvision/data/database/app_database.dart';
 
 class CaptureRecord {

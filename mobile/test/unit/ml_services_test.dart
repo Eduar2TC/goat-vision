@@ -9,7 +9,7 @@ void main() {
   group('MockGoatSegmenter', () {
     test('produces a mask within the bounding box', () async {
       final segmenter = MockGoatSegmenter();
-      final detection = Detection(
+      const detection = Detection(
         x: 10,
         y: 20,
         width: 100,
@@ -32,7 +32,7 @@ void main() {
   group('MockLandmarkDetector', () {
     test('detects all 10 anatomical landmarks', () async {
       final detector = MockLandmarkDetector();
-      final detection = Detection(
+      const detection = Detection(
         x: 10,
         y: 20,
         width: 100,
@@ -53,7 +53,7 @@ void main() {
 
     test('retrieves landmark by type', () async {
       final detector = MockLandmarkDetector();
-      final detection = Detection(
+      const detection = Detection(
         x: 10,
         y: 20,
         width: 100,

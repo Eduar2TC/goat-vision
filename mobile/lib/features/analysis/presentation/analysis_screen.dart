@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:goatvision/core/constants/app_colors.dart';
 import 'package:goatvision/core/utils/app_logger.dart';
 import 'package:goatvision/data/providers/providers.dart';
-import 'package:goatvision/core/ml/weight_prediction_service.dart';
 import 'package:goatvision/domain/entities/morphometric_features.dart';
 
 class AnalysisScreen extends ConsumerStatefulWidget {

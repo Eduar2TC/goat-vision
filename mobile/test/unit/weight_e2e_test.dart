@@ -113,7 +113,7 @@ Future<WeightPredictionResult> _runFullFlow({
 void main() {
   group('barrido de resoluciones/aspectos', () {
     for (final (w, h, label) in _resoluciones) {
-      test('produce peso válido a ${w}x${h} ($label)', () async {
+      test('produce peso válido a ${w}x$h ($label)', () async {
         final result = await _runFullFlow(w: w, h: h, seed: 42);
 
         expect(result.valid, isTrue,
@@ -121,13 +121,13 @@ void main() {
         // Rango corporal de una cabra criolla (no una elefanta ni un ratón):
         // en cm se valida el estudio, el peso debe caer en banda plausible.
         expect(result.prediction.estimatedWeightKg, inInclusiveRange(15, 120),
-            reason: 'peso implausible a ${w}x${h}');
+            reason: 'peso implausible a ${w}x$h');
         expect(result.prediction.lowerBoundKg,
             lessThan(result.prediction.estimatedWeightKg));
         expect(result.prediction.upperBoundKg,
             greaterThan(result.prediction.estimatedWeightKg));
         expect(result.prediction.modelVersion, contains('ref-'),
-            reason: 'el modelo de referencia no fue utilizado a ${w}x${h}');
+            reason: 'el modelo de referencia no fue utilizado a ${w}x$h');
       });
     }
   });

@@ -1,5 +1,3 @@
-import 'package:flutter/material.dart';
-import 'package:goatvision/core/constants/app_colors.dart';
 
 class AppExceptions implements Exception {
   final String message;

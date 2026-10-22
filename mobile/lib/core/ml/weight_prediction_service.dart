@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:goatvision/core/ml/ml_interfaces.dart';
 import 'package:goatvision/domain/entities/morphometric_features.dart';
 import 'package:goatvision/domain/entities/prediction.dart';

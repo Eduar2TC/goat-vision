@@ -1,6 +1,5 @@
 import 'package:goatvision/core/errors/app_exceptions.dart';
 import 'package:goatvision/domain/entities/calibration.dart';
-import 'package:goatvision/domain/entities/landmark.dart';
 
 abstract interface class CalibrationProviderService {
   String get name;
