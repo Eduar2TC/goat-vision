@@ -34,13 +34,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          LOG="$(tail -c 30000 ml_tests.log 2>/dev/null || true)"
-          : >/dev/null
-          BODY="### CI failure — ML (Python)
-
-$(printf '%s' "$LOG")"
+          printf '### CI failure — ML (Python)\n\n' > /tmp/body.md
+          tail -c 30000 ml_tests.log 2>/dev/null >> /tmp/body.md || true
           gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/comments" \
-            -f body="$BODY" --silent
+            -f body="$(cat /tmp/body.md)" --silent
 
   flutter:
     name: Flutter (analyze · test · APK)
@@ -116,15 +113,11 @@ $(printf '%s' "$LOG")"
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          ALL=""
+          printf '### CI failure — Flutter (%s)\n' "${{ github.job }}" > /tmp/body.md
           for f in /tmp/ci-logs/*.log; do
             [ -s "$f" ] || continue
-            ALL="$ALL
-
-===== $(basename "$f") =====
-
-$(tail -c 20000 "$f")"
+            printf '\n===== %s =====\n\n' "$(basename "$f")" >> /tmp/body.md
+            tail -c 20000 "$f" >> /tmp/body.md
           done
-          BODY="### CI failure — Flutter (${{ github.job }})$ALL"
           gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/comments" \
-            -f body="$BODY" --silent || true
+            -f body="$(cat /tmp/body.md)" --silent || true
