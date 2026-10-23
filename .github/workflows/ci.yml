@@ -95,10 +95,18 @@ jobs:
           set -o pipefail
           flutter test 2>&1 | tee /tmp/ci-logs/test.log
 
-      - name: Android SDK (build APK)
-        uses: android-actions/setup-android@v3
-        with:
-          accept-licenses: 'true'
+      - name: Android SDK licenses
+        # ubuntu-latest ya trae ANDROID_HOME (SDK moderno): la acción
+        # android-actions/setup-android@v3 intenta instalar el paquete
+        # 'tools', deprecado y removido, y muere con exit 1. Basta
+        # aceptar las licencias de forma no interactiva.
+        run: |
+          set -o pipefail
+          SDKM="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          [ -x "$SDKM" ] || SDKM=$(ls /usr/local/lib/android/sdk/cmdline-tools/*/bin/sdkmanager | head -1)
+          yes 2>/dev/null | "$SDKM" --licenses > /tmp/ci-logs/licenses.log 2>&1 || {
+            echo "sdkmanager --licenses exited $?"; tail -20 /tmp/ci-logs/licenses.log; exit 1;
+          }
 
       - name: Build debug APK
         working-directory: mobile
