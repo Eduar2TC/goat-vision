@@ -1,0 +1,19 @@
+name: apriltag_poc
+description: >-
+  PoC: AprilTag (FFI, package:apriltag) vs OpenCV ArUco corner/pose robustness
+  benchmark on synthetic degraded scenes. Standalone tool, not part of the app.
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: ^3.5.0
+
+dependencies:
+  apriltag:
+    path: third_party/apriltag_pkg
+  image: ^4.3.0
+
+dependency_overrides:
+  hooks: ^2.2.0
+  code_assets: ^2.1.0
+  native_toolchain_cmake: ^0.3.2

@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:goatvision/core/constants/app_colors.dart';
 import 'package:goatvision/core/utils/app_logger.dart';
 import 'package:goatvision/data/providers/providers.dart';
-import 'package:goatvision/core/ml/weight_prediction_service.dart';
 import 'package:goatvision/domain/entities/morphometric_features.dart';
 
 class AnalysisScreen extends ConsumerStatefulWidget {
@@ -78,14 +77,14 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen> {
 
   MorphometricFeatures _featuresFromSession(AnalysisSessionState session) {
     return MorphometricFeatures(
-      bodyLengthCm: session.morphometrics['body_length'] ?? 0,
-      withersHeightCm: session.morphometrics['withers_height'] ?? 0,
-      rumpHeightCm: session.morphometrics['rump_height'] ?? 0,
-      chestDepthCm: session.morphometrics['chest_depth'] ?? 0,
-      chestWidthCm: session.morphometrics['chest_width'] ?? 0,
-      rumpWidthCm: session.morphometrics['rump_width'] ?? 0,
-      rumpLengthCm: session.morphometrics['rump_length'] ?? 0,
-      pawHeightCm: session.morphometrics['paw_height'] ?? 0,
+      bodyLengthCm: session.morphometrics['body_length_cm'] ?? 0,
+      withersHeightCm: session.morphometrics['withers_height_cm'] ?? 0,
+      rumpHeightCm: session.morphometrics['rump_height_cm'] ?? 0,
+      chestDepthCm: session.morphometrics['chest_depth_cm'] ?? 0,
+      chestWidthCm: session.morphometrics['chest_width_cm'] ?? 0,
+      rumpWidthCm: session.morphometrics['rump_width_cm'] ?? 0,
+      rumpLengthCm: session.morphometrics['rump_length_cm'] ?? 0,
+      pawHeightCm: session.morphometrics['paw_height_cm'] ?? 0,
       bodyAreaCm2: session.morphometrics['body_area_cm2'] ?? 0,
       bodyAspectRatio: session.morphometrics['body_aspect_ratio'] ?? 1,
     );

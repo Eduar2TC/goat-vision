@@ -122,10 +122,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
               const Divider(),
             ],
-            ListTile(
-              leading: const Icon(Icons.privacy_tip),
-              title: const Text('Privacidad'),
-              subtitle: const Text(
+            const ListTile(
+              leading: Icon(Icons.privacy_tip),
+              title: Text('Privacidad'),
+              subtitle: Text(
                 'Todos los datos permanecen en tu dispositivo',
               ),
             ),
@@ -159,7 +159,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   void _showModelsModal(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      builder: (context) => Padding(
+      builder: (context) => SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -209,14 +209,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Future<void> _showDatasetExport(BuildContext context) async {
+    // Todas las lecturas async antes del uso de context: showDialog es la
+    // única línea que cruza el hueco y va tras el guard de context.mounted.
     final file = await DatasetLogService.exportCsv();
     final rows = await DatasetLogService.readRows();
-    if (!context.mounted) return;
-
     final content = await file.readAsString();
     final preview = content.length > 600
         ? content.substring(0, 600)
         : content;
+    if (!context.mounted) return;
 
     showDialog<void>(
       context: context,

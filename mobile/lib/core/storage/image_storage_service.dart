@@ -2,25 +2,19 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:goatvision/core/storage/app_storage.dart';
 import 'package:goatvision/core/utils/app_logger.dart';
-import 'package:goatvision/domain/entities/animal.dart';
 
 class ImageStorageService {
   ImageStorageService._(this._baseDir);
 
   final String _baseDir;
-  static ImageStorageService? _instance;
-
   static Future<ImageStorageService> create() async {
     final baseDir = AppStorage.capturesDirectory;
     final dir = Directory(baseDir);
     if (!await dir.exists()) {
       await dir.create(recursive: true);
     }
-    _instance = ImageStorageService(baseDir);
-    return _instance!;
+    return ImageStorageService._(baseDir);
   }
-
-  static ImageStorageService get instance => _instance!;
 
   Future<String> saveCapture({
     required List<int> bytes,

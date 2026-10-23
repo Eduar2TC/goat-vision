@@ -57,10 +57,18 @@ class AppStorage {
     try {
       final file = File(_settingsPath);
       await file.parent.create(recursive: true);
+      // Escribir siempre el estado completo de las 3 prefs: sobrescribir el
+      // archivo solo con el mapa recibido borraría las demás preferencias.
+      final all = <String, String>{
+        'hasSeenOnboarding': '$hasSeenOnboarding',
+        'preferredUnit': preferredUnit,
+        'themeMode': themeMode,
+        ...kv,
+      };
       await file.writeAsString(
-        kv.entries.map((e) => '${e.key}=${e.value}').join('\n'),
+        all.entries.map((e) => '${e.key}=${e.value}').join('\n'),
         flush: true,
-        mode: FileMode.append,
+        mode: FileMode.write,
       );
     } catch (_) {}
   }

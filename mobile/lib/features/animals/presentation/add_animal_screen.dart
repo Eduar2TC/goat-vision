@@ -81,9 +81,8 @@ class _AddAnimalScreenState extends ConsumerState<AddAnimalScreen> {
     );
 
     await repo.saveAnimal(animal);
-    if (context.mounted) {
-      context.go('/animals');
-    }
+    if (!mounted) return;
+    context.go('/animals');
   }
 
   @override
@@ -126,7 +125,7 @@ class _AddAnimalScreenState extends ConsumerState<AddAnimalScreen> {
                 maxLines: 3,
               ),
               const SizedBox(height: 16),
-              Text('Sexo'),
+              const Text('Sexo'),
               const SizedBox(height: 8),
               SegmentedButton<String?>(
                 segments: const [

@@ -1,5 +1,4 @@
 import 'package:goatvision/domain/entities/animal.dart';
-import 'package:goatvision/domain/entities/prediction.dart';
 
 abstract class UseCase<Input, Output> {
   Future<Output> execute(Input input);

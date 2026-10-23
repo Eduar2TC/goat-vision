@@ -1,17 +1,21 @@
-import 'package:flutter/foundation.dart';
 
 class RangeValidator {
   RangeValidator._();
 
+  // Rangos basados en el estudio Paredes-Chocce et al. (2025) para campos
+  // que se usan en el predictor de referencia, y rangos físicos generales
+  // para el resto.
+  // Las claves coinciden con MorphometricFeatures.toMap() y con
+  // FEATURE_COLUMNS de ml/preprocessing/features.py (sufijo _cm).
   static const _ranges = <String, (double, double)>{
-    'body_length': (30.0, 120.0),
-    'withers_height': (30.0, 90.0),
-    'rump_height': (30.0, 90.0),
-    'chest_depth': (15.0, 60.0),
-    'chest_width': (10.0, 45.0),
-    'rump_width': (8.0, 40.0),
-    'rump_length': (15.0, 60.0),
-    'paw_height': (8.0, 35.0),
+    'body_length_cm': (30.0, 120.0),
+    'withers_height_cm': (30.0, 90.0),
+    'rump_height_cm': (51.0, 89.2),  // Rango del estudio
+    'chest_depth_cm': (22.0, 45.0),  // Rango del estudio
+    'chest_width_cm': (12.0, 27.0),  // Rango del estudio
+    'rump_width_cm': (8.7, 27.0),    // Rango del estudio
+    'rump_length_cm': (15.0, 60.0),
+    'paw_height_cm': (8.0, 35.0),
   };
 
   static bool isValid(String feature, double value) {

@@ -1,4 +1,4 @@
-import 'dart:math';
+import 'dart:ui';
 
 class CoordinateTransformer {
   CoordinateTransformer._();
@@ -38,18 +38,4 @@ class CoordinateTransformer {
       height / imgH,
     );
   }
-}
-
-class Offset {
-  final double dx;
-  final double dy;
-  const Offset(this.dx, this.dy);
-}
-
-class Rect {
-  final double left;
-  final double top;
-  final double width;
-  final double height;
-  const Rect.fromLTWH(this.left, this.top, this.width, this.height);
 }

@@ -13,14 +13,15 @@ Computer Vision, de forma **no invasiva y completamente offline**.
 
 | Componente | Estado | Notas |
 |---|---|---|
-| Peso (literatura) | Funcional | Ecuación Paredes-Chocce 2025, honesta (RSE publicado, no PICP propio) |
+| Peso (operador activo) | Funcional E2E | CV mock con escena físicamente coherente + ecuación Paredes-Chocce 2025; test E2E dura garantía de regresión |
+| Peso (operador futuro) | Bloqueado | `RunMode.real` lanza `UnimplementedError` a propósito hasta integrar los `.tflite` propios |
 | CV (detección/segmentación/landmarks) | Mock | Servicios simulados; `RunMode.real` lanza `UnimplementedError` a propósito |
-| Calibración (marcador 30 cm) | Mock | `MockMarkerDetector`; en producción requiere ArUco real |
+| Calibración (marcador 30 cm) | Funcional E2E | Loop de frames BGRA de cámara: detección real de tag36h11 (`opencv_dart` FFI) en modo real, `MockMarkerDetector` en dev; validada contra el ground truth del PoC (ver «Flujo E2E del peso») |
 | UI / UX | Funcional | Escaneo rápido, historial con búsqueda, modo oscuro, ed./borrado de cabras |
 | Dataset (recolección) | Funcional (dev) | Guarda peso real + features en JSONL; exporta CSV |
 | CI/CD | Parcial | Workflow definido; Flutter pub get y 1 test ML fallan en GitHub Actions (pendiente resolver) |
 | Tests ML | 21/21 | 13 numpy puros + 8 con pandas/sklearn/opencv (validados localmente) |
-| Tests Dart | ~20 | Unit + widget; requieren `flutter test` en host real para ejecutarse |
+| Tests Dart | 73/73 | Los 3 de Drift requieren `libsqlite3` nativa en el host: `apt install libsqlite3-dev` o el workaround sin permisos admin (ver §Cómo ejecutar la app) |
 | APK compilado | Pendiente | Requiere host con Flutter SDK + Android SDK para `flutter build apk` |
 
 **Bloqueo actual:** El pipeline de CV real (`RunMode.real`) requiere 4 modelos
@@ -37,6 +38,41 @@ CÁMARA → DETECCIÓN → SEGMENTACIÓN → LANDMARKS → CALIBRACIÓN
 → MEDIDAS BIOMÉTRICAS → MODELO DE REGRESIÓN → PESO ESTIMADO
 → RANGO DE INCERTIDUMBRE → CONFIANZA → HISTORIAL
 ```
+
+### Flujo E2E del peso (cámara → historial)
+
+Con `runModeProvider` en modo dev, cada medición recorre este camino
+completo (el mismo que recorrerá el modo real, que solo sustituye los
+servicios por los `.tflite`):
+
+1. **Calibración en vivo en la captura** (`capture_screen.dart`): la cámara
+   se inicializa con `ImageFormatGroup.bgra8888` y corre un loop
+   `startImageStream` que entrega frames BGRA a ~5 fps (throttle de 200 ms
+   y bandera de ocupación para serializar el trabajo del detector). Cada
+   frame alimenta `markerDetectorProvider` (`lib/data/providers/providers.dart`):
+   `ArucoMarkerDetector` en modo real (tag36h11 **real** vía FFI de
+   `opencv_dart`, validado contra el ground truth del PoC en
+   `test/unit/marker_detector_test.dart`) o `MockMarkerDetector` en dev
+   (ignora el contenido del frame y devuelve su escena simulada).
+2. Con la **primera lectura válida** (ancho > 0 y confianza ≥ 0.5) se detiene
+   el streaming y se fija la escala real: `cmPerPixel = 30 cm / ancho del
+   marcador en px`. La UI guía al usuario («Marca el marcador de 30 cm en el
+   encuadre») y pasa a «Lista para capturar» al lograrlo.
+3. **Captura y análisis**: `takePicture` → pipeline de CV (detección,
+   segmentación, landmarks) → medidas biométricas en píxeles escaladas con el
+   `cmPerPixel` obtenido → `ReferenceWeightPredictor` (Paredes-Chocce 2025,
+   ver «Los dos operadores de peso») → peso estimado + rango (RSE del estudio)
+   + confianza (derivada de la calidad de la calibración).
+4. **Resultado** (`result_screen.dart`): además de las medidas, el peso, el
+   rango y la confianza, el pie muestra el nuevo campo **`Calibración:`** con
+   el método y la escala usados, por ejemplo `Marcador · 0.123 cm/px`. Los
+   métodos legibles son `marker` → Marcador, `manual` → Manual, `arcore` →
+   ARCore, `depth` → Profundidad.
+5. **Guardar**: se persisten la medición, las medidas biométricas y la
+   captura, con la calibración en la tabla de capturas (`calibrationMethod`
+   y `calibrationScale`) para que la fuente de la escala quede registrada en
+   el historial. En modo dev, si anotaste el peso real en báscula, además se
+   agrega la fila correspondiente al dataset (ver «Recolección de datos»).
 
 Uso sin herramientas: el dashboard ofrece **"Escanear cabra"** (captura
 directa sin crear antes un animal). Al guardar, si no se eligió cabra, se
@@ -56,13 +92,47 @@ copiable, y advertencias de incertidumbre).
 
 ## Recolección de datos (entrenar tu modelo)
 
-En modo desarrollador (`Configuración → Modo de desarrollo`, activado por
-defecto) la pantalla de resultados muestra un campo opcional **"Peso real en
-báscula (kg)"**. Al guardar la medición se añade una fila
-(features + objetivo) al log `dataset_log.jsonl`. **Configuración →
-Exportar dataset (CSV)** genera `dataset.csv` con las 8 columnas de features
-+ metadatos, listo para el pipeline en `ml/` (el objetivo `real_weight_kg`
-coincide con `TARGET` en `ml/preprocessing/features.py`).
+El modo desarrollador (Configuración → Modo de desarrollo) está **activado
+por defecto**; desactívalo solo cuando estés en producción. Con él, la
+pantalla de resultados muestra el panel **"Recolección de dataset
+(desarrollador)"** con un campo opcional **"Peso real en báscula (kg)"**.
+
+### Flujo de colecta
+
+1. **Escanea la cabra** (dashboard → "Escanear cabra" o desde su ficha).
+   El pipeline calcula el peso con el operador activo (CV mock con medidas
+   plausibles + fórmula de literatura; ver «Los dos operadores de peso»).
+2. **Pesa a la cabra una vez y anota el valor** en "Peso real en báscula
+   (kg)" de la pantalla de resultado. Si dejas el campo vacío, **no se
+   escribe fila de dataset** para esa medición (solo se guarda la medición
+   normal en el historial): toda fila del log lleva un peso real de
+   báscula. Nota: el formato (`buildDatasetRow`) admite objetivo vacío
+   (NaN → celda vacía en CSV) si en el futuro se quiere registrar
+   inferencias sin objetivo.
+3. **Guarda la medición** (botón Guardar). Se escribe una línea JSONL en
+   `dataset_log.jsonl` (documento de la app): `measurement_id`, `animal_id`,
+   `timestamp_iso`, las 8 features `*_cm` en el orden de
+   `kDatasetFeatureColumns` y el objetivo `real_weight_kg`.
+4. **Repite con varias cabras** — más filas, mejor modelo. El CSV exportado
+   respeta el orden exacto de columnas.
+5. **Exporta el dataset:** Configuración → "Exportar dataset (CSV)" →
+   `dataset.csv` con las 8 columnas de features + metadatos y objetivo
+   `real_weight_kg`, coincidente 1:1 con `FEATURE_COLUMNS` y `TARGET` de
+   `ml/preprocessing/features.py`. Entrénalo con el pipeline de `ml/`
+   (sección «Pipeline de entrenamiento»).
+
+### Qué esperar en modo dev (importante)
+
+Las features del JSONL salen de la **CV simulada con escena físicamente
+coherente**: cuerpo ~83–94 cm, altura a la cruz ~64–77 cm, anchos de
+pecho/grupa dentro del rango del estudio. Son **medidas plausibles, no
+medidas reales**: sirven para ensayar la colecta y el pipeline E2E, pero el
+dataset útil para entrenar exige el marcador ArUco y los landmarks reales
+(ver «Bloqueo actual»). Si entrenas con estas filas, el modelo aprenderá
+la simetría del mock, no tu rebaño.
+
+Si la escritura del log falla alguna vez, la app lo registra en el log del
+sistema (`DatasetLogService`) y **no interrumpe el guardado** de la medición.
 
 ## CI / pruebas
 
@@ -113,10 +183,11 @@ goatvision/
 
 ## Implementación actual
 
-El MVP corre en **modo mock**: toda la UI, el pipeline de análisis, la
-calibración y la predicción funcionan con servicios simulados, de modo que
-es posible desarrollar y probar la experiencia completa antes de entrenar
-los modelos reales.
+El MVP corre en **modo dev (mock)**: la UI, el pipeline de análisis y la
+calibración funcionan con servicios simulados; el **peso no es simulado**
+(sigue el operador activo documentado abajo, con la ecuación publicada). Así
+es posible probar la experiencia completa antes de entrenar los modelos
+reales.
 
 Los modelos simulados están claramente separados en
 `lib/core/ml/mock_ml_services.dart` y **nunca deben activarse en producción**
@@ -143,9 +214,39 @@ publicado (0.64) y el intervalo el RSE del estudio, **no** una cobertura
 medida por GoatVision. Cuando se entrene y exporte `goat_weight.tflite`
 con datos propios, sustituye a este fallback.
 
-El modo se controla con `runModeProvider` (`lib/data/providers/providers.dart`).
-`RunMode.real` lanza `UnimplementedError` hasta completar la integración de los
-modelos TFLite: los mocks nunca se activan accidentalmente en producción.
+### Los dos operadores de peso
+
+La app tiene **dos operadores de peso**, uno activo y otro bloqueado a
+propósito. Nunca se mezclan: el modo lo controla `runModeProvider`
+(`lib/data/providers/providers.dart`) y los mocks no se activan nunca
+accidentalmente en producción.
+
+**Operador activo — modo dev (`RunMode.mock`, por defecto).** El peso se
+calcula hoy de punta a punta con la CV simulada: detección, segmentación y
+landmarks provienen de una escena mock **físicamente coherente**
+(marcador de 30 cm ≈ 7% del ancho de imagen, caja de cabra con proporciones
+anatómicas reales, landmarks de perfil), de modo que las medidas que entran
+al estimador caen dentro del rango del estudio en cualquier resolución y
+aspecto de encuadre. El estimador es `ReferenceWeightPredictor`
+(literatura, ver más arriba). La garantía es un test E2E de regresión
+(`mobile/test/unit/weight_e2e_test.dart`) que replica el flujo real
+ captura→análisis→resultado en 11 resoluciones/aspectos (incluido portrait
+y ultrawide 21:9) y 5 semillas del detector, y **falla si el pipeline deja de
+producir una predicción válida en cualquiera de ellas**.
+
+⚠️ Cuidado al interpretar: las medidas "buenas" salen de la escena mock
+(coherente), **no de visión real**. Sirven para validar el flujo y para
+colectar dataset con features plausibles; los datos de entrenamiento con
+datos reales requieren el marcador ArUco y los landmarks reales.
+
+**Operador futuro — modo real (`RunMode.real`, hoy inaccesible).** Cuando se
+entrene y exporte `goat_weight.tflite` con datos propios, este operador
+tomará el relevo con los 4 modelos `.tflite` (detección, segmentación,
+landmarks y peso). Mientras no existan, `runModeProvider` lanza
+`UnimplementedError` de forma voluntaria: la app **no** ofrece peso en ese
+modo y los mocks quedan excluidos de producción. Los pasos para
+habilitarlo están en la sección «Bloqueo actual» y «Integración en máquina
+real».
 
 Flujo de captura: `capture → analysis → result → Guardar`. La imagen se persiste
 en el momento de la captura y se guarda junto a la medición y las medidas
@@ -191,6 +292,39 @@ cd mobile
 flutter pub get
 flutter run
 ```
+
+### Pruebas Dart en hosts sin acceso admin (workaround `LD_LIBRARY_PATH`)
+
+3 tests de la suite (los de Drift, cuyo FFI carga `sqlite3` del host) necesitan
+una `libsqlite3.so` "sin sufijo de versión" cargable: el FFI busca el
+símbolo en `libsqlite3.so`, pero las distros Debian solo instalan el
+runtime como `libsqlite3.so.0`. El camino normal es el paquete de
+desarrollo del sistema (`apt install libsqlite3-dev`) — pero si el host no
+permite abrir sesión de admin, basta un **symlink del usuario** hacia la
+librería runtime que ya existe, en un directorio propio y exportado vía
+`LD_LIBRARY_PATH`:
+
+```bash
+# 1. Directorio local de libs + symlink a la runtime del sistema
+mkdir -p ~/.local/lib
+ln -s /usr/lib/x86_64-linux-gnu/libsqlite3.so.0 ~/.local/lib/libsqlite3.so
+
+# 2. Suite Dart siempre con ese path (es necesario solo para el FFI de
+# drift en el host; el resto de tests funcionan sin esto)
+cd mobile
+LD_LIBRARY_PATH=$HOME/.local/lib flutter test
+```
+
+Verificar y limpiar si cambia la ruta del sistema:
+
+```bash
+ls -l ~/.local/lib/libsqlite3.so   # → /usr/lib/x86_64-linux-gnu/libsqlite3.so.0
+lddtree ~/.local/lib/libsqlite3.so 2>/dev/null || ldd $(readlink -f ~/.local/lib/libsqlite3.so)
+# si el symlink quedó roto: rm ~/.local/lib/libsqlite3.so y recrear
+```
+
+En CI (GitHub Actions runner con acceso admin) no aplica: las dependencias
+se instalan con apt tal como documenta el workflow.
 
 ## Pipeline de entrenamiento
 
@@ -247,6 +381,7 @@ referencia de literatura; 8 condicionales a deps).
 - [Evaluación](docs/ml/evaluation.md)
 - [Especificación del dataset](docs/dataset/dataset-specification.md)
 - [Notas de investigación](docs/research/research-notes.md)
+- [Marcadores fiduciales: comparativa y decisión](docs/research/fiducial-markers.md)
 - [Privacidad](docs/privacy/privacy.md)
 
 ## Roadmap

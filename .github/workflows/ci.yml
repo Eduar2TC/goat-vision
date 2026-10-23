@@ -34,13 +34,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          LOG="$(tail -c 30000 ml_tests.log 2>/dev/null || true)"
-          : >/dev/null
-          BODY="### CI failure — ML (Python)
-
-$(printf '%s' "$LOG")"
+          printf '### CI failure — ML (Python)\n\n' > /tmp/body.md
+          tail -c 30000 ml_tests.log 2>/dev/null >> /tmp/body.md || true
           gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/comments" \
-            -f body="$BODY" --silent
+            -f body="$(cat /tmp/body.md)" --silent
 
   flutter:
     name: Flutter (analyze · test · APK)
@@ -54,10 +51,17 @@ $(printf '%s' "$LOG")"
           distribution: 'zulu'
           java-version: '17'
 
-      - name: Flutter (stable)
+      - name: Flutter 3.38.1 (pinned)
         uses: subosito/flutter-action@v2
         with:
+          # Pin explícito: riverpod_generator 2.6.x (usado vía riverpod 2)
+          # no puede serializar el modelo de elementos del SDK de Dart 3.13
+          # (dot-shorthands internos) — ver /E visitDotShorthandPropertyAccess.
+          # La pubspec exige flutter >=3.38.1 y todas las deps de build
+          # son compatibles con Dart 3.10. Quitar el pin al migrar a
+          # riverpod 3.x.
           channel: 'stable'
+          flutter-version: '3.38.1'
           cache: true
 
       - name: Native SQLite (drift tests)
@@ -91,10 +95,18 @@ $(printf '%s' "$LOG")"
           set -o pipefail
           flutter test 2>&1 | tee /tmp/ci-logs/test.log
 
-      - name: Android SDK (build APK)
-        uses: android-actions/setup-android@v3
-        with:
-          accept-licenses: 'true'
+      - name: Android SDK licenses
+        # ubuntu-latest ya trae ANDROID_HOME (SDK moderno): la acción
+        # android-actions/setup-android@v3 intenta instalar el paquete
+        # 'tools', deprecado y removido, y muere con exit 1. Basta
+        # aceptar las licencias de forma no interactiva.
+        run: |
+          set -o pipefail
+          SDKM="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          [ -x "$SDKM" ] || SDKM=$(ls /usr/local/lib/android/sdk/cmdline-tools/*/bin/sdkmanager | head -1)
+          yes 2>/dev/null | "$SDKM" --licenses > /tmp/ci-logs/licenses.log 2>&1 || {
+            echo "sdkmanager --licenses exited $?"; tail -20 /tmp/ci-logs/licenses.log; exit 1;
+          }
 
       - name: Build debug APK
         working-directory: mobile
@@ -116,15 +128,11 @@ $(printf '%s' "$LOG")"
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          ALL=""
+          printf '### CI failure — Flutter (%s)\n' "${{ github.job }}" > /tmp/body.md
           for f in /tmp/ci-logs/*.log; do
             [ -s "$f" ] || continue
-            ALL="$ALL
-
-===== $(basename "$f") =====
-
-$(tail -c 20000 "$f")"
+            printf '\n===== %s =====\n\n' "$(basename "$f")" >> /tmp/body.md
+            tail -c 20000 "$f" >> /tmp/body.md
           done
-          BODY="### CI failure — Flutter (${{ github.job }})$ALL"
           gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/comments" \
-            -f body="$BODY" --silent || true
+            -f body="$(cat /tmp/body.md)" --silent || true

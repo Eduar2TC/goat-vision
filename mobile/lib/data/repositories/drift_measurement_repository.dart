@@ -1,6 +1,5 @@
 import 'package:drift/drift.dart';
 import 'package:goatvision/data/database/app_database.dart';
-import 'package:goatvision/domain/entities/model_info.dart';
 import 'package:goatvision/domain/entities/morphometric_features.dart';
 import 'package:goatvision/domain/entities/prediction.dart';
 
@@ -173,7 +172,7 @@ class DriftMeasurementRepository {
     await (_db.delete(_db.measurements)..where((t) => t.id.equals(id))).go();
   }
 
-  MeasurementRecord _toRecord(MeasurementRow row) {
+  MeasurementRecord _toRecord(Measurement row) {
     return MeasurementRecord(
       id: row.id,
       animalId: row.animalId,

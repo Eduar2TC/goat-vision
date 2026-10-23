@@ -1,0 +1,8 @@
+# Artefactos de build del hook native-assets (regenerables)
+.dart_tool/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/

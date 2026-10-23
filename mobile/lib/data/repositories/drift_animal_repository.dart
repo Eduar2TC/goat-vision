@@ -1,7 +1,7 @@
 import 'package:drift/drift.dart';
 import 'package:goatvision/core/storage/image_storage_service.dart';
 import 'package:goatvision/data/database/app_database.dart';
-import 'package:goatvision/domain/entities/animal.dart';
+import 'package:goatvision/domain/entities/animal.dart' as domain;
 import 'package:goatvision/domain/repositories/animal_repository.dart';
 
 class DriftAnimalRepository implements AnimalRepository {
@@ -10,7 +10,7 @@ class DriftAnimalRepository implements AnimalRepository {
   DriftAnimalRepository(this._db);
 
   @override
-  Future<void> saveAnimal(Animal animal) async {
+  Future<void> saveAnimal(domain.Animal animal) async {
     await _db.into(_db.animals).insertOnConflictUpdate(
           AnimalsCompanion.insert(
             id: animal.id,
@@ -26,7 +26,7 @@ class DriftAnimalRepository implements AnimalRepository {
   }
 
   @override
-  Future<List<Animal>> getAnimals() async {
+  Future<List<domain.Animal>> getAnimals() async {
     final rows = await (_db.select(_db.animals)
           ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]))
         .get();
@@ -34,7 +34,7 @@ class DriftAnimalRepository implements AnimalRepository {
   }
 
   @override
-  Future<Animal?> getAnimal(String id) async {
+  Future<domain.Animal?> getAnimal(String id) async {
     final row = await (_db.select(_db.animals)
           ..where((t) => t.id.equals(id)))
         .getSingleOrNull();
@@ -42,7 +42,7 @@ class DriftAnimalRepository implements AnimalRepository {
   }
 
   @override
-  Future<void> updateAnimal(Animal animal) async {
+  Future<void> updateAnimal(domain.Animal animal) async {
     await saveAnimal(animal);
   }
 
@@ -90,7 +90,7 @@ class DriftAnimalRepository implements AnimalRepository {
   }
 
   @override
-  Future<List<Animal>> searchAnimals(String query) async {
+  Future<List<domain.Animal>> searchAnimals(String query) async {
     final term = '%$query%';
     final rows = await (_db.select(_db.animals)
           ..where((t) => t.name.like(term) | t.breed.like(term)))
@@ -98,8 +98,8 @@ class DriftAnimalRepository implements AnimalRepository {
     return rows.map(_toEntity).toList();
   }
 
-  Animal _toEntity(AnimalRow row) {
-    return Animal(
+  domain.Animal _toEntity(Animal row) {
+    return domain.Animal(
       id: row.id,
       name: row.name,
       breed: row.breed,

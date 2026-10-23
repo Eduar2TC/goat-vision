@@ -24,14 +24,14 @@ class MorphometricFeatures {
   });
 
   Map<String, double> toMap() => {
-        'body_length': bodyLengthCm,
-        'withers_height': withersHeightCm,
-        'rump_height': rumpHeightCm,
-        'chest_depth': chestDepthCm,
-        'chest_width': chestWidthCm,
-        'rump_width': rumpWidthCm,
-        'rump_length': rumpLengthCm,
-        'paw_height': pawHeightCm,
+        'body_length_cm': bodyLengthCm,
+        'withers_height_cm': withersHeightCm,
+        'rump_height_cm': rumpHeightCm,
+        'chest_depth_cm': chestDepthCm,
+        'chest_width_cm': chestWidthCm,
+        'rump_width_cm': rumpWidthCm,
+        'rump_length_cm': rumpLengthCm,
+        'paw_height_cm': pawHeightCm,
       };
 
   List<double> toFeatureVector() => [

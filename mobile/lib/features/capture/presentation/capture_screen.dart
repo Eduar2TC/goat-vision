@@ -5,16 +5,13 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:goatvision/core/errors/app_exceptions.dart';
 import 'package:goatvision/core/ml/ml_interfaces.dart';
 import 'package:goatvision/core/ml/mock_ml_services.dart';
+import 'package:goatvision/data/providers/providers.dart';
 import 'package:goatvision/core/storage/image_storage_service.dart';
 import 'package:goatvision/core/utils/app_logger.dart';
 import 'package:goatvision/core/vision/morphometric_calculator.dart';
-import 'package:goatvision/data/providers/providers.dart';
-import 'package:goatvision/domain/entities/animal.dart';
 import 'package:goatvision/domain/entities/calibration.dart';
-import 'package:goatvision/domain/entities/detection.dart';
 import 'package:goatvision/domain/entities/landmark.dart';
 import 'package:goatvision/domain/entities/morphometric_features.dart';
 import 'package:goatvision/domain/entities/prediction.dart';
@@ -39,10 +36,9 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
   bool _isInitializing = true;
   String? _error;
 
-  GoatDetectorService _detector = MockGoatDetector();
-  MockGoatSegmenter _segmenter = MockGoatSegmenter();
-  MockLandmarkDetector _landmarkDetector = MockLandmarkDetector();
-  final MockMarkerDetector _markerDetector = const MockMarkerDetector();
+  final GoatDetectorService _detector = MockGoatDetector();
+  final MockGoatSegmenter _segmenter = MockGoatSegmenter();
+  final MockLandmarkDetector _landmarkDetector = MockLandmarkDetector();
 
   List<Rect> _boundingBoxes = [];
   List<double> _confidences = [];
@@ -56,9 +52,16 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
   double _cmPerPixel = 0;
   bool _isCapturing = false;
 
+  // Loop de calibración marker: streaming real de frames BGRA8888 a ~5 fps
+  // hacia el detector del provider (ArucoMarkerDetector en RunMode.real).
+  static const int _markerFrameIntervalMs = 200;
+  int _lastMarkerFrameMs = 0;
+  bool _markerBusy = false;
+  bool _markerSatisfied = false;
+
   bool _goatDetected = false;
   bool _bodyComplete = false;
-  bool _goodLighting = true;
+  final bool _goodLighting = true;
   bool _validPose = false;
   String? _instruction;
   bool _qualityReady = false;
@@ -96,7 +99,13 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
         orElse: () => _cameras!.first,
       );
 
-      _controller = CameraController(back, ResolutionPreset.high);
+      _controller = CameraController(
+        back,
+        ResolutionPreset.high,
+        // La detección ArUco (tag36h11) consume los frames del streaming en
+        // BGRA8888: 1 plano, 4 bytes/px, formato que ya maneja el detector FFI.
+        imageFormatGroup: ImageFormatGroup.bgra8888,
+      );
       await _controller!.initialize();
       await _controller!.setFocusMode(FocusMode.auto);
 
@@ -176,27 +185,114 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
         _landmarks = lm.landmarks;
       });
 
-      final marker = await _markerDetector.detectMarker(
-        Uint8List(0),
-        width,
-        height,
-      );
-
-      if (!mounted) return;
-      setState(() {
-        _markerDetected = true;
-        _markerWidth = marker.$1 / width;
-        _markerHeight = marker.$2 / height;
-        _cmPerPixel = 30.0 / marker.$1;
-        _qualityReady = true;
-        _instruction = 'Lista para capturar';
-      });
+      // Calibración de marcador sobre frames REALES de la cámara:
+      // en RunMode.real el provider entrega ArucoMarkerDetector (tag36h11);
+      // en RunMode.mock sigue el MockMarkerDetector de la escena simulada.
+      _startMarkerFrameLoop();
     });
+  }
+
+  void _startMarkerFrameLoop() {
+    final controller = _controller;
+    if (controller == null || !controller.value.isInitialized) return;
+    if (_markerSatisfied) return;
+
+    // Mientras el loop no encuentra un marcador válido, la UI guía al usuario.
+    if (_instruction == null) {
+      setState(() {
+        _instruction = 'Marca el marcador de 30 cm en el encuadre';
+      });
+    }
+
+    // `startImageStream` entrega BGRA8888 por la configuración del controller.
+    // El callback es fire-and-forget: el throttle + bandera serializan el
+    // trabajo del detector (5 fps objetivo) y evitan colgarse del stream.
+    controller
+        .startImageStream(_onMarkerFrame)
+        .catchError((e) {
+          AppLogger.instance.error('marker frame stream failed', error: e);
+        });
+  }
+
+  void _onMarkerFrame(CameraImage image) {
+    if (!mounted || _markerSatisfied) return;
+    final now = DateTime.now().millisecondsSinceEpoch;
+    if (now - _lastMarkerFrameMs < _markerFrameIntervalMs || _markerBusy) {
+      return;
+    }
+    _lastMarkerFrameMs = now;
+    _markerBusy = true;
+
+    _processMarkerFrame(image)
+        .catchError((e) {
+          AppLogger.instance.error('marker frame processing failed', error: e);
+        })
+        .whenComplete(() => _markerBusy = false);
+  }
+
+  Future<void> _processMarkerFrame(CameraImage image) async {
+    if (!mounted || _markerSatisfied) return;
+
+    // BGRA8888: 1 plano, 4 bytes/px. Otro formato (p. ej. NV21 si el device
+    // ignora el imageFormatGroup) queda fuera del flujo de calibración.
+    if (image.planes.isEmpty) return;
+    final plane = image.planes.first;
+    final expected = image.width * image.height * 4;
+    if (plane.bytes.length != expected) {
+      return; // sin conversión YUV: solo se calibra con BGRA8888
+    }
+
+    // Copia defensiva: el buffer puede ser reutilizado por la plataforma.
+    final bytes = Uint8List.fromList(plane.bytes);
+
+    final marker = await ref.read(markerDetectorProvider).detectMarker(
+      bytes,
+      image.width,
+      image.height,
+    );
+
+    if (!mounted) return;
+    final markerValid = marker.$3 >= 0.5 && marker.$1 > 0;
+    if (!markerValid) {
+      return;
+    }
+
+    // Primer marcador válido del loop: congela el streaming y termina
+    // la calibración end-to-end (cm/px a partir de la medición real del
+    // marcador físico de 30 cm).
+    _markerSatisfied = true;
+    await _stopMarkerFrameStream();
+    if (!mounted) return;
+
+    setState(() {
+      _markerDetected = true;
+      _markerWidth = marker.$1 / image.width;
+      _markerHeight = marker.$2 / image.height;
+      _cmPerPixel = 30.0 / marker.$1;
+      _qualityReady = true;
+      _instruction = 'Lista para capturar';
+    });
+    AppLogger.instance.debug(
+      'marker calibration ok: ${marker.$1.toStringAsFixed(1)}x'
+      '${marker.$2.toStringAsFixed(1)} px (conf ${marker.$3.toStringAsFixed(2)})',
+    );
+  }
+
+  Future<void> _stopMarkerFrameStream() async {
+    final controller = _controller;
+    if (controller == null || !controller.value.isStreamingImages) return;
+    try {
+      await controller.stopImageStream();
+    } catch (e) {
+      AppLogger.instance.error('marker frame stream stop failed', error: e);
+    }
   }
 
   @override
   void dispose() {
-    _controller?.dispose();
+    _markerSatisfied = true; // corta el loop de calibración
+    _stopMarkerFrameStream().whenComplete(() => _controller?.dispose());
+    _controller = null;
     _detector.unload();
     _segmenter.unload();
     _landmarkDetector.unload();
@@ -219,23 +315,6 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
       final imageFile = File(xfile.path);
       final bytes = await imageFile.readAsBytes();
 
-      final size = _controller!.value.previewSize;
-      final imageWidth = size?.width.toInt() ?? 1920;
-      final imageHeight = size?.height.toInt() ?? 1080;
-
-      final det = Detection(
-        x: (_boundingBoxes.isEmpty ? 0.2 : _boundingBoxes.first.left) *
-            imageWidth,
-        y: (_boundingBoxes.isEmpty ? 0.2 : _boundingBoxes.first.top) *
-            imageHeight,
-        width: (_boundingBoxes.isEmpty ? 0.5 : _boundingBoxes.first.width) *
-            imageWidth,
-        height:
-            (_boundingBoxes.isEmpty ? 0.5 : _boundingBoxes.first.height) *
-                imageHeight,
-        confidence: _confidences.isEmpty ? 0.85 : _confidences.first,
-      );
-
       final morphologyResult = _computeMorphometrics();
 
       final prediction = await _computePrediction(morphologyResult.$1);
@@ -247,6 +326,9 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
         cmPerPixel: _cmPerPixel,
         confidence: 0.9,
         timestamp: DateTime.now(),
+        // La escena mock calibra con el marcador simulado; en producción
+        // este valor vendrá del proveedor ArUco real.
+        method: 'marker',
       );
 
       final imagePath = await _persistCaptureImage(bytes: bytes);
@@ -264,6 +346,7 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
         morphometrics: morphologyResult.$1.toMap(),
         timestamp: DateTime.now(),
         imagePath: imagePath,
+        calibration: calibration,
       );
 
       ref.read(analysisSessionProvider.notifier).state = state;
@@ -305,6 +388,7 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
       cmPerPixel: _cmPerPixel,
       confidence: 0.9,
       timestamp: DateTime.now(),
+      method: 'marker', // escena mock con marcador simulado
     );
 
     double bodyAreaPixels = 0;

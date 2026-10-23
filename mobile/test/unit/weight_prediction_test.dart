@@ -5,7 +5,6 @@ import 'package:goatvision/core/ml/mock_ml_services.dart';
 import 'package:goatvision/core/ml/weight_prediction_service.dart';
 import 'package:goatvision/core/vision/morphometric_calculator.dart';
 import 'package:goatvision/domain/entities/calibration.dart';
-import 'package:goatvision/domain/entities/detection.dart';
 import 'package:goatvision/domain/entities/landmark.dart';
 import 'package:goatvision/domain/entities/morphometric_features.dart';
 
@@ -24,10 +23,11 @@ void main() {
       expect(prediction.modelVersion, contains('mock'));
     });
 
-    test('formatted display avoids false precision', () async {
+    test('formatted display uses one decimal', () async {
       final predictor = MockWeightPredictor();
       final prediction = await predictor.predict(_features());
-      expect(prediction.formattedWeight, isNot(contains('.')));
+      // formattedWeight uses toStringAsFixed(1) which always shows one decimal
+      expect(prediction.formattedWeight, contains('.'));
     });
   });
 
@@ -35,7 +35,7 @@ void main() {
     test('validates features before prediction', () async {
       final service = WeightPredictionService(MockWeightPredictor());
 
-      final invalidFeatures = MorphometricFeatures(
+      const invalidFeatures = MorphometricFeatures(
         bodyLengthCm: 0,
         withersHeightCm: 0,
         rumpHeightCm: 0,
@@ -56,6 +56,7 @@ void main() {
     test('produces valid result for good features', () async {
       final service = WeightPredictionService(MockWeightPredictor());
       final result = await service.run(_features());
+      expect(result.errors, isEmpty, reason: 'features must pass ranges: ${result.errors}');
       expect(result.valid, isTrue);
       expect(result.prediction.estimatedWeightKg, greaterThan(0));
     });
@@ -97,13 +98,20 @@ MorphometricFeatures _features() {
     cmPerPixel: 0.1,
     confidence: 0.9,
     timestamp: DateTime.now(),
+    method: 'marker',
   );
 
   final features = MorphometricCalculator.extract(
     [
+      // Geometría sintética anatómicamente plausible (cm = px · 0.1):
+      // cuerpo ~75 cm, altura a la cruz ~65 cm, rango completo dentro
+      // de los límites del estudio (ver RangeValidator).
       const Landmark(type: LandmarkType.withers, x: 100, y: 50, confidence: 0.9),
-      const Landmark(type: LandmarkType.tailBase, x: 400, y: 60, confidence: 0.9),
-      const Landmark(type: LandmarkType.hoof, x: 100, y: 300, confidence: 0.9),
+      const Landmark(type: LandmarkType.tailBase, x: 851, y: 50, confidence: 0.9),
+      const Landmark(type: LandmarkType.hoof, x: 100, y: 700, confidence: 0.9),
+      const Landmark(type: LandmarkType.chest, x: 100, y: 350, confidence: 0.9),
+      const Landmark(type: LandmarkType.rump, x: 340, y: 60, confidence: 0.9),
+      const Landmark(type: LandmarkType.hindLeg, x: 830, y: 660, confidence: 0.9),
     ],
     calibration,
     0,

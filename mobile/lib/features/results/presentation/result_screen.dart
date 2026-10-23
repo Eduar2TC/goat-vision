@@ -11,6 +11,7 @@ import 'package:goatvision/data/repositories/repository_providers.dart';
 import 'package:goatvision/core/utils/app_logger.dart';
 import 'package:goatvision/core/utils/unit_converter.dart';
 import 'package:goatvision/domain/entities/animal.dart';
+import 'package:goatvision/domain/entities/calibration.dart';
 import 'package:uuid/uuid.dart';
 
 class ResultScreen extends ConsumerStatefulWidget {
@@ -80,8 +81,8 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
                 viewType: 'side',
                 imageWidth: 0,
                 imageHeight: 0,
-                calibrationMethod: 'marker_aruco',
-                calibrationScale: 0,
+                calibrationMethod: session.calibration.method,
+                calibrationScale: session.calibration.cmPerPixel,
                 qualityScore: session.confidence,
                 createdAt: timestamp,
               ),
@@ -152,15 +153,14 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
   }
 
   Map<String, double> _cmMap(AnalysisSessionState session) {
-    return {
-      'body_length_cm': session.morphometrics['body_length'] ?? 0,
-      'withers_height_cm': session.morphometrics['withers_height'] ?? 0,
-      'rump_height_cm': session.morphometrics['rump_height'] ?? 0,
-      'chest_depth_cm': session.morphometrics['chest_depth'] ?? 0,
-      'chest_width_cm': session.morphometrics['chest_width'] ?? 0,
-      'rump_width_cm': session.morphometrics['rump_width'] ?? 0,
-      'rump_length_cm': session.morphometrics['rump_length'] ?? 0,
-      'paw_height_cm': session.morphometrics['paw_height'] ?? 0,
+    return {              'body_length_cm': session.morphometrics['body_length_cm'] ?? 0,
+      'withers_height_cm': session.morphometrics['withers_height_cm'] ?? 0,
+      'rump_height_cm': session.morphometrics['rump_height_cm'] ?? 0,
+      'chest_depth_cm': session.morphometrics['chest_depth_cm'] ?? 0,
+      'chest_width_cm': session.morphometrics['chest_width_cm'] ?? 0,
+      'rump_width_cm': session.morphometrics['rump_width_cm'] ?? 0,
+      'rump_length_cm': session.morphometrics['rump_length_cm'] ?? 0,
+      'paw_height_cm': session.morphometrics['paw_height_cm'] ?? 0,
       'body_area_cm2': session.morphometrics['body_area_cm2'] ?? 0,
       'body_aspect_ratio': session.morphometrics['body_aspect_ratio'] ?? 1,
     };
@@ -177,6 +177,22 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
       return 'Fórmula de referencia (literatura)';
     }
     return version;
+  }
+
+  /// Etiqueta legible para el método con el que se obtuvo la calibración
+  /// (los mismos valores que se guardan en la tabla de capturas).
+  String _calibrationLabel(Calibration calibration) {
+    final metodo = switch (calibration.method) {
+      'marker' => 'Marcador', // en producción: ArUco real; en dev, simulado
+      'manual' => 'Manual',
+      'arcore' => 'ARCore',
+      'depth' => 'Profundidad',
+      _ => calibration.method,
+    };
+    final escala = calibration.cmPerPixel > 0
+        ? ' · ${(calibration.cmPerPixel).toStringAsFixed(3)} cm/px'
+        : '';
+    return '$metodo$escala';
   }
 
   @override
@@ -285,15 +301,15 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
+                    const Row(
                       children: [
                         Icon(
                           Icons.data_object,
                           size: 18,
                           color: AppColors.warning,
                         ),
-                        const SizedBox(width: 8),
-                        const Expanded(
+                        SizedBox(width: 8),
+                        Expanded(
                           child: Text(
                             'Recolección de dataset (desarrollador)',
                             style: TextStyle(fontWeight: FontWeight.bold),
@@ -333,27 +349,27 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
             const SizedBox(height: 8),
             _MeasurementRow(
               label: 'Longitud corporal',
-              value: session.morphometrics['body_length'],
+              value: session.morphometrics['body_length_cm'],
             ),
             _MeasurementRow(
               label: 'Altura a la cruz',
-              value: session.morphometrics['withers_height'],
+              value: session.morphometrics['withers_height_cm'],
             ),
             _MeasurementRow(
               label: 'Altura de grupa',
-              value: session.morphometrics['rump_height'],
+              value: session.morphometrics['rump_height_cm'],
             ),
             _MeasurementRow(
               label: 'Profundidad de pecho',
-              value: session.morphometrics['chest_depth'],
+              value: session.morphometrics['chest_depth_cm'],
             ),
             _MeasurementRow(
               label: 'Ancho de pecho',
-              value: session.morphometrics['chest_width'],
+              value: session.morphometrics['chest_width_cm'],
             ),
             _MeasurementRow(
               label: 'Ancho de grupa',
-              value: session.morphometrics['rump_width'],
+              value: session.morphometrics['rump_width_cm'],
             ),
             const SizedBox(height: 24),
             Row(
@@ -394,6 +410,11 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
             const SizedBox(height: 8),
             Text(
               'Modelo: ${_modelLabel(session.modelVersion)}',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            Text(
+              'Calibración: ${_calibrationLabel(session.calibration)}',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall,
             ),
