@@ -51,10 +51,17 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
-      - name: Flutter (stable)
+      - name: Flutter 3.38.1 (pinned)
         uses: subosito/flutter-action@v2
         with:
+          # Pin explícito: riverpod_generator 2.6.x (usado vía riverpod 2)
+          # no puede serializar el modelo de elementos del SDK de Dart 3.13
+          # (dot-shorthands internos) — ver /E visitDotShorthandPropertyAccess.
+          # La pubspec exige flutter >=3.38.1 y todas las deps de build
+          # son compatibles con Dart 3.10. Quitar el pin al migrar a
+          # riverpod 3.x.
           channel: 'stable'
+          flutter-version: '3.38.1'
           cache: true
 
       - name: Native SQLite (drift tests)
