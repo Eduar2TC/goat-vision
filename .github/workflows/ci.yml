@@ -101,12 +101,13 @@ jobs:
         # 'tools', deprecado y removido, y muere con exit 1. Basta
         # aceptar las licencias de forma no interactiva.
         run: |
-          set -o pipefail
           SDKM="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
           [ -x "$SDKM" ] || SDKM=$(ls /usr/local/lib/android/sdk/cmdline-tools/*/bin/sdkmanager | head -1)
-          yes 2>/dev/null | "$SDKM" --licenses > /tmp/ci-logs/licenses.log 2>&1 || {
-            echo "sdkmanager --licenses exited $?"; tail -20 /tmp/ci-logs/licenses.log; exit 1;
-          }
+          # Best-effort: si sdkmanager falla no aborta el job; las licencias
+          # preinstaladas del runner suelen bastar y flutter build apk será
+          # el juez real.
+          yes 2>/dev/null | "$SDKM" --licenses > /tmp/ci-logs/licenses.log 2>&1 \
+            || { echo "sdkmanager --licenses falló ($?): continuando"; tail -5 /tmp/ci-logs/licenses.log; }
 
       - name: Build debug APK
         working-directory: mobile
