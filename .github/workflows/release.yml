@@ -1,0 +1,137 @@
+name: Release
+
+# En push de tag v*: construye el APK release, lo adjunta a la GitHub
+# Release del tag (creándola si no existe) y guarda el artefacto del run.
+#
+# Nota de firma: app/build.gradle.kts usa el signingConfig de debug
+# para release, así que el APK release queda firmado con la clave de
+# debug (instalable, no para Play Store).
+
+on:
+  push:
+    tags: ['v*']
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  build-apk:
+    name: Release APK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Java 17 (AGP 8)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Flutter 3.38.1 (pinned)
+        uses: subosito/flutter-action@v2
+        with:
+          # Misma razón que en ci.yml: riverpod_generator 2.6.x no puede
+          # serializar el modelo de Dart 3.13 (dot-shorthands).
+          channel: 'stable'
+          flutter-version: '3.38.1'
+          cache: true
+
+      - name: Cache Gradle (caches + wrapper)
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('mobile/android/gradle/wrapper/gradle-wrapper.properties', 'mobile/android/settings.gradle.kts', 'mobile/pubspec.lock') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
+
+      - name: Cache build nativo OpenCV (dartcv4)
+        uses: actions/cache@v4
+        with:
+          path: mobile/.dart_tool/hooks_runner/shared/dartcv4/build
+          key: dartcv-${{ runner.os }}-${{ hashFiles('mobile/pubspec.lock') }}
+          restore-keys: |
+            dartcv-${{ runner.os }}-
+
+      - name: Set up log dir
+        run: mkdir -p /tmp/ci-logs
+
+      - name: Pub get
+        working-directory: mobile
+        run: |
+          set -o pipefail
+          flutter pub get 2>&1 | tee /tmp/ci-logs/pubget.log
+
+      - name: Generate drift/freezed/json (gitignored)
+        working-directory: mobile
+        run: |
+          set -o pipefail
+          dart run build_runner build --delete-conflicting-outputs 2>&1 \
+            | tee /tmp/ci-logs/runner.log
+
+      - name: Android SDK licenses
+        run: |
+          SDKM="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          [ -x "$SDKM" ] || SDKM=$(ls /usr/local/lib/android/sdk/cmdline-tools/*/bin/sdkmanager | head -1)
+          yes 2>/dev/null | "$SDKM" --licenses > /tmp/ci-logs/licenses.log 2>&1 \
+            || { echo "sdkmanager --licenses falló ($?): continuando"; tail -5 /tmp/ci-logs/licenses.log; }
+
+      - name: Build release APK (versión desde el tag)
+        # v1.2.3+4 -> --build-name 1.2.3, --build-number 4; sin sufijo
+        # +N el build-number es 1. El AndroidManifest lleva la versión
+        # real del tag en lugar de la de pubspec.yaml.
+        working-directory: mobile
+        run: |
+          set -o pipefail
+          VER="${GITHUB_REF_NAME#v}"
+          NAME="${VER%%+*}"
+          BUILD="${VER#*+}"
+          [ "$BUILD" = "$VER" ] && BUILD=1
+          echo "build-name=$NAME build-number=$BUILD"
+          flutter build apk --release \
+            --build-name="$NAME" --build-number="$BUILD" \
+            2>&1 | tee /tmp/ci-logs/apkbuild.log
+
+      - name: Attach APK to release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          APK=mobile/build/app/outputs/flutter-apk/app-release.apk
+          test -s "$APK"
+          ls -l "$APK"
+          if ! gh release view --repo "$GITHUB_REPOSITORY" "$TAG" >/dev/null 2>&1; then
+            gh release create --repo "$GITHUB_REPOSITORY" "$TAG" \
+              --target "$GITHUB_SHA" --title "$TAG" --generate-notes
+          fi
+          gh release upload --repo "$GITHUB_REPOSITORY" \
+            "$TAG" "$APK" --clobber
+
+      - name: Upload run artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: goatvision-release-apk
+          path: mobile/build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Post failure logs
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          printf '### Release failure\n\n' > /tmp/body.md
+          for f in /tmp/ci-logs/*.log; do
+            [ -s "$f" ] || continue
+            printf '\n===== %s =====\n\n' "$(basename "$f")" >> /tmp/body.md
+            tail -c 20000 "$f" >> /tmp/body.md
+          done
+          gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/comments" \
+            -f body="$(cat /tmp/body.md)" --silent || true
