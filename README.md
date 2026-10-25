@@ -2,6 +2,8 @@
 
 [![CI](https://github.com/Eduar2TC/goat-vision/actions/workflows/ci.yml/badge.svg)](https://github.com/Eduar2TC/goat-vision/actions/workflows/ci.yml)
 
+> 📥 **[Descargar APK (v1.0.0+1)](https://github.com/Eduar2TC/goat-vision/releases/download/v1.0.0%2B1/app-debug.apk)**
+
 Aplicación móvil Android para estimar el peso vivo de cabras mediante
 Computer Vision, de forma **no invasiva y completamente offline**.
 
