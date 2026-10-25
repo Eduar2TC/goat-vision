@@ -34,7 +34,13 @@ android {
 
     buildTypes {
         release {
+            // El APK release de CI va firmado con la clave de debug
+            // (instalable; Play Store requeriría keystore propio).
             signingConfig = signingConfigs.getByName("debug")
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
         }
     }
 }
