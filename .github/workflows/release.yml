@@ -81,6 +81,35 @@ jobs:
           yes 2>/dev/null | "$SDKM" --licenses > /tmp/ci-logs/licenses.log 2>&1 \
             || { echo "sdkmanager --licenses falló ($?): continuando"; tail -5 /tmp/ci-logs/licenses.log; }
 
+      - name: Set up release signing (Secrets → key.properties)
+        # Si el convertidor no está configurado, el build queda firmado
+        # con la clave de debug (fallback en build.gradle.kts).
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        run: |
+          set -euo pipefail
+          if [ -z "${KEYSTORE_BASE64:-}" ]; then
+            echo "KEYSTORE_BASE64 no configurado: firmo con debug y sigo."
+            exit 0
+          fi
+          [ -n "${KEY_ALIAS:-}" ] && [ -n "${KEYSTORE_PASSWORD:-}" ] \
+            || { echo "KEY_ALIAS o KEYSTORE_PASSWORD vacíos con KEYSTORE_BASE64 definido" >&2; exit 1; }
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode \
+            > mobile/android/app/goatvision-release.jks
+          cat > mobile/android/key.properties <<PROPFILE
+          storeFile=app/goatvision-release.jks
+          keyAlias=$KEY_ALIAS
+          storePassword=$KEYSTORE_PASSWORD
+          keyPassword=$KEYSTORE_PASSWORD
+          PROPFILE
+          # Sanity: el keystore debe abrir con la contraseña (no imprime
+          # valores, solo valida tipo y alias).
+          keytool -list -keystore mobile/android/app/goatvision-release.jks \
+            -storepass "$KEYSTORE_PASSWORD" -alias "$KEY_ALIAS" >/dev/null
+          echo "Keystore cargado, alias $KEY_ALIAS."
+
       - name: Build release APK (versión desde el tag)
         # v1.2.3+4 -> --build-name 1.2.3, --build-number 4; sin sufijo
         # +N el build-number es 1. El AndroidManifest lleva la versión
@@ -121,6 +150,12 @@ jobs:
           path: mobile/build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: ignore
           retention-days: 14
+
+      - name: Clean signing material
+        # Seguridad: key.properties y el keystore decodificados no deben
+        # quedar visibles en artifacts/post-run workspace del runner.
+        if: always()
+        run: rm -f mobile/android/key.properties mobile/android/app/goatvision-release.jks
 
       - name: Post failure logs
         if: failure()
