@@ -67,6 +67,30 @@ jobs:
       - name: Native SQLite (drift tests)
         run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev
 
+      - name: Cache Gradle (caches + wrapper)
+        # Ahorra los downloads de AGP/Kotlin/plugins y de .jars entre
+        # corridas; el gate es igual, solo cambia el costo de I/O.
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('mobile/android/gradle/wrapper/gradle-wrapper.properties', 'mobile/android/settings.gradle.kts', 'mobile/pubspec.lock') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
+
+      - name: Cache build nativo OpenCV (dartcv4)
+        # El hook de dartcv4 compila OpenCV por FetchContent+CMake en
+        # .dart_tool/hooks_runner/shared; costaba ~18 min enteros por
+        # corrida. Con el build tree intacto, cmake --build no recompila
+        # nada y la corrida cae a segundos.
+        uses: actions/cache@v4
+        with:
+          path: mobile/.dart_tool/hooks_runner/shared/dartcv4/build
+          key: dartcv-${{ runner.os }}-${{ hashFiles('mobile/pubspec.lock') }}
+          restore-keys: |
+            dartcv-${{ runner.os }}-
+
       - name: Set up log dir
         run: mkdir -p /tmp/ci-logs
 
